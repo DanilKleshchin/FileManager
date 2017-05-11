@@ -9,9 +9,11 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.TypedValue;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -42,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                String path = ((TextView) findViewById(R.id.toolbar_title)).getText().toString() +
+                String path = ((EditText) findViewById(R.id.toolbar_title)).getText().toString() +
                         "/" + listItems.get(i).fileName;
                 if (new File(path).isDirectory()) {
                     fillListView(new File(path));
@@ -67,16 +69,18 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         toolbar.setLogo(new ColorDrawable(getResources().getColor(android.R.color.transparent)));
-        if (!((TextView) findViewById(R.id.toolbar_title)).getText().equals("") &&
-                !((TextView) findViewById(R.id.toolbar_title)).getText().equals(mainPath)) {
+        final EditText toolbarText = (EditText) findViewById(R.id.toolbar_title);
+        //toolbarText.setLines(1);
+        if (!toolbarText.getText().equals("") &&
+                !toolbarText.getText().equals(mainPath)) {
             final Drawable upArrow = getResources().getDrawable(R.drawable.ic_arrow_back_black_36dp);
             upArrow.setColorFilter(getResources().getColor(R.color.colorWhite), PorterDuff.Mode.SRC_ATOP);
             toolbar.setLogo(upArrow);
             setLogoOnClickListener(toolbar, new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    fillListView(new File(((TextView) findViewById(R.id.toolbar_title)).getText().
-                            toString().substring(0, ((TextView) findViewById(R.id.toolbar_title)).
+                    fillListView(new File(toolbarText.getText().
+                            toString().substring(0, toolbarText.
                             getText().toString().length() - 1 - currentDirectory.length() + 1)));
                 }
             });
@@ -102,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         listFilesItems.clear();
         listView.setAdapter(listAdapter);
         File list[] = file.listFiles();
-        ((TextView) findViewById(R.id.toolbar_title)).setText(file.getPath());
+        ((EditText) findViewById(R.id.toolbar_title)).setText(file.getPath());
         initToolbar();
         currentDirectory = file.getName();
         if (list != null) {
