@@ -2,11 +2,11 @@ package com.kleshchin.danil.filemanager;
 
 import android.content.Intent;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
@@ -14,12 +14,8 @@ import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Toast;
-
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,10 +23,10 @@ import java.util.Comparator;
 public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private ListAdapter listAdapter;
-    private ArrayList<ListItemStructure> listItems = new ArrayList<>();
+    private ArrayList<Pair<Integer, String>> listItems = new ArrayList<>();
     private String mainPath = "/storage";
     private String currentDirectory;
-    EditText toolbarTitle;
+    private EditText toolbarTitle;
     public static final String LISTVIEW_STATE = "listview.state";
 
     @Override
@@ -45,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                String path = toolbarTitle.getText().toString() + "/" + listItems.get(i).getFileName();
+                String path = toolbarTitle.getText().toString() + "/" + listItems.get(i).second;
                 if (new File(path).isDirectory()) {
                     fillListView(new File(path));
                 } else {
@@ -95,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
                         toolbarText.length() - 1 - currentDirectory.length() + 1)));
                 break;
         }
-
         return true;
     }
 
@@ -109,29 +104,26 @@ public class MainActivity extends AppCompatActivity {
         if (list != null) {
             for (File currentFile : list) {
                 if (currentFile.isDirectory()) {
-                    listItems.add(new ListItemStructure(currentFile.getName(), R.drawable.folder));
+                    listItems.add(new Pair(Integer.valueOf(R.drawable.folder), currentFile.getName()));
                 } else {
-                    listItems.add(new ListItemStructure(currentFile.getName(), R.drawable.file));
+                    listItems.add(new Pair(Integer.valueOf(R.drawable.file), currentFile.getName()));
                 }
             }
-            Collections.sort(listItems, new Comparator<ListItemStructure>() {
-
+            Collections.sort(listItems, new Comparator<Pair<Integer, String>>() {
                 @Override
-                public int compare(ListItemStructure l1, ListItemStructure l2) {
-                    int nameCompare = String.valueOf(l2.getImageName())
-                            .compareToIgnoreCase(String.valueOf(l1.getImageName()));
+                public int compare(Pair<Integer, String> l1, Pair<Integer, String> l2) {
+                    int nameCompare = String.valueOf(l2.first)
+                            .compareToIgnoreCase(String.valueOf(l1.first));
                     if (nameCompare != 0) {
                         return nameCompare;
                     } else {
-                        return l1.getFileName().compareTo(l2.getFileName());
+                        return l1.second.compareTo(l2.second);
                     }
                 }
             });
             listView.setAdapter(listAdapter);
         }
     }
-
-
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
