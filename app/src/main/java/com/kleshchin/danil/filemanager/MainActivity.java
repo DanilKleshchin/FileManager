@@ -37,10 +37,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 String path = toolbarTitle.getText().toString() + "/" + listAdapter.getItem(i).getName();
-                if (new File(path).isDirectory()) {
-                    fillListView(new File(path));
+                if (new File(listAdapter.getItem(i).getPath()).isDirectory()) {
+                    fillListView(new File(listAdapter.getItem(i).getPath()));
                 } else {
-                    onFileSelected(path);
+                    onFileSelected(listAdapter.getItem(i).getPath());
                 }
             }
         });
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
         final Drawable upArrow = getResources().getDrawable(R.drawable.ic_arrow_back_black_36dp);
         upArrow.setColorFilter(getResources().getColor(R.color.colorWhite), PorterDuff.Mode.SRC_ATOP);
         String toolbarText = toolbarTitle.getText().toString();
-        if (!toolbarText.equals("") && !toolbarText.equals(mainPath)) {
+        if (!toolbarText.equals("") && !toolbarText.equals(this.getResources().getString(R.string.root_directory)) && !toolbar.equals(mainPath)) {
             getSupportActionBar().setHomeAsUpIndicator(upArrow);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -91,7 +91,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void fillListView(File file) {
         listAdapter = new ListAdapter(this, file);
-        toolbarTitle.setText(file.getPath());
+        if(file.getPath().equals(mainPath)) {
+            toolbarTitle.setText(R.string.root_directory);
+        } else {
+            toolbarTitle.setText(file.getPath());
+        }
         toolbarTitle.setSelection(toolbarTitle.getText().length());
         initToolbar();
         currentDirectory = file.getName();
