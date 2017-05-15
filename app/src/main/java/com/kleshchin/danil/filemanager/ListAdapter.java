@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,11 +32,20 @@ public class ListAdapter extends BaseAdapter {
         fillList(file_);
     }
 
-    @Override
-    public int getCount() { return file_.size(); }
+    static class ViewHolder {
+        TextView fileName;
+        ImageView fileImage;
+    }
 
     @Override
-    public File getItem(int i) { return file_.get(i); }
+    public int getCount() {
+        return file_.size();
+    }
+
+    @Override
+    public File getItem(int i) {
+        return file_.get(i);
+    }
 
     @Override
     public long getItemId(int i) {
@@ -44,18 +54,27 @@ public class ListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
+        ViewHolder viewHolder;
         if (view == null) {
             view = LayoutInflater.from(context_).inflate(R.layout.list_items, viewGroup, false);
+            viewHolder = new ViewHolder();
+            viewHolder.fileName = (TextView) view.findViewById(R.id.fileName);
+            viewHolder.fileImage = (ImageView) view.findViewById(R.id.fileImage);
+            view.setTag(viewHolder);
+        } else {
+            viewHolder = (ViewHolder) view.getTag();
         }
         File file = getListItem(i);
         Context context = viewGroup.getContext();
-        ((TextView) view.findViewById(R.id.fileName)).setText(file.getName());
+        viewHolder.fileName.setText(file.getName());
         if (file.isDirectory()) {
-            ((ImageView) view.findViewById(R.id.fileImage)).setImageDrawable(context.getResources()
-                    .getDrawable(R.drawable.folder));
+            /*((ImageView) view.findViewById(R.id.fileImage)).setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.folder));*/
+            viewHolder.fileImage.setImageDrawable(context.getResources().getDrawable(R.drawable.folder));
         } else {
-            ((ImageView) view.findViewById(R.id.fileImage)).setImageDrawable(context.getResources()
-                    .getDrawable(R.drawable.file));
+            /*((ImageView) view.findViewById(R.id.fileImage)).setImageDrawable(context.getResources()
+                    .getDrawable(R.drawable.file));*/
+            viewHolder.fileImage.setImageDrawable(context.getResources().getDrawable(R.drawable.file));
         }
         return view;
     }
