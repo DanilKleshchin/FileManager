@@ -6,6 +6,8 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
@@ -14,7 +16,6 @@ import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
-
 import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
@@ -36,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                String path = toolbarTitle.getText().toString() + "/" + listAdapter.getItem(i).getName();
                 if (new File(listAdapter.getItem(i).getPath()).isDirectory()) {
                     fillListView(new File(listAdapter.getItem(i).getPath()));
                 } else {
@@ -52,9 +52,9 @@ public class MainActivity extends AppCompatActivity {
         String mime = "*/*";
         MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
         if (mimeTypeMap.hasExtension(
-                mimeTypeMap.getFileExtensionFromUrl(uri.toString())))
+                MimeTypeMap.getFileExtensionFromUrl(uri.toString())))
             mime = mimeTypeMap.getMimeTypeFromExtension(
-                    mimeTypeMap.getFileExtensionFromUrl(uri.toString()));
+                    MimeTypeMap.getFileExtensionFromUrl(uri.toString()));
         intent.setDataAndType(uri, mime);
         startActivity(intent);
     }
@@ -62,18 +62,23 @@ public class MainActivity extends AppCompatActivity {
     private void initToolbar() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-        final Drawable upArrow = getResources().getDrawable(R.drawable.ic_arrow_back_black_36dp);
-        upArrow.setColorFilter(getResources().getColor(R.color.colorWhite), PorterDuff.Mode.SRC_ATOP);
-        String toolbarText = toolbarTitle.getText().toString();
-        if (!toolbarText.equals("") && !toolbarText.equals(this.getResources().getString(R.string.root_directory)) && !toolbar.equals(mainPath)) {
-            getSupportActionBar().setHomeAsUpIndicator(upArrow);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
-        } else {
-            getSupportActionBar().setHomeButtonEnabled(false);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-            getSupportActionBar().setDisplayShowHomeEnabled(false);
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(false);
+            final Drawable upArrow = ContextCompat.getDrawable(this ,R.drawable.ic_arrow_back_black_36dp);
+            upArrow.setColorFilter(ContextCompat.getColor( this ,R.color.colorWhite), PorterDuff.Mode.SRC_ATOP);
+            String toolbarText = toolbarTitle.getText().toString();
+            if (!toolbarText.equals("")
+                    && !toolbarText.equals(this.getResources().getString(R.string.root_directory))
+                    && !toolbarText.equals(mainPath)) {
+                actionBar.setHomeAsUpIndicator(upArrow);
+                actionBar.setDisplayHomeAsUpEnabled(true);
+                actionBar.setDisplayShowHomeEnabled(true);
+            } else {
+                actionBar.setHomeButtonEnabled(false);
+                actionBar.setDisplayHomeAsUpEnabled(false);
+                actionBar.setDisplayShowHomeEnabled(false);
+            }
         }
     }
 
@@ -91,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void fillListView(File file) {
         listAdapter = new ListAdapter(this, file);
-        if(file.getPath().equals(mainPath)) {
+        if (file.getPath().equals(mainPath)) {
             toolbarTitle.setText(R.string.root_directory);
         } else {
             toolbarTitle.setText(file.getPath());

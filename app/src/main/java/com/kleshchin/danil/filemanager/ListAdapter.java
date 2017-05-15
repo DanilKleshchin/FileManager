@@ -2,13 +2,13 @@ package com.kleshchin.danil.filemanager;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +18,6 @@ import java.util.Comparator;
 /**
  * Created by Danil Kleshchin on 11.05.2017.
  */
-
 public class ListAdapter extends BaseAdapter {
 
     @NonNull
@@ -26,13 +25,13 @@ public class ListAdapter extends BaseAdapter {
     @NonNull
     private Context context_;
 
-    public ListAdapter(Context context, File file) {
+    public ListAdapter(@NonNull Context context, File file) {
         context_ = context;
         file_ = new ArrayList<>(Arrays.asList(file.listFiles()));
         fillList(file_);
     }
 
-    static class ViewHolder {
+    private static class ViewHolder {
         TextView fileName;
         ImageView fileImage;
     }
@@ -68,14 +67,14 @@ public class ListAdapter extends BaseAdapter {
         Context context = viewGroup.getContext();
         viewHolder.fileName.setText(file.getName());
         if (file.isDirectory()) {
-            viewHolder.fileImage.setImageDrawable(context.getResources().getDrawable(R.drawable.folder));
+            viewHolder.fileImage.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.folder));
         } else {
-            viewHolder.fileImage.setImageDrawable(context.getResources().getDrawable(R.drawable.file));
+            viewHolder.fileImage.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.file));
         }
         return view;
     }
 
-    File getListItem(int position) {
+    private File getListItem(int position) {
         return getItem(position);
     }
 
@@ -84,14 +83,14 @@ public class ListAdapter extends BaseAdapter {
         Collections.sort(file, new SortFolder());
     }
 
-    class SortFileName implements Comparator<File> {
+    private class SortFileName implements Comparator<File> {
         @Override
         public int compare(File f1, File f2) {
             return f1.getName().compareTo(f2.getName());
         }
     }
 
-    class SortFolder implements Comparator<File> {
+    private class SortFolder implements Comparator<File> {
         @Override
         public int compare(File f1, File f2) {
             if (f1.isDirectory() == f2.isDirectory())
