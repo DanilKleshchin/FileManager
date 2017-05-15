@@ -68,12 +68,8 @@ public class ListAdapter extends BaseAdapter {
         Context context = viewGroup.getContext();
         viewHolder.fileName.setText(file.getName());
         if (file.isDirectory()) {
-            /*((ImageView) view.findViewById(R.id.fileImage)).setImageDrawable(context.getResources()
-                    .getDrawable(R.drawable.folder));*/
             viewHolder.fileImage.setImageDrawable(context.getResources().getDrawable(R.drawable.folder));
         } else {
-            /*((ImageView) view.findViewById(R.id.fileImage)).setImageDrawable(context.getResources()
-                    .getDrawable(R.drawable.file));*/
             viewHolder.fileImage.setImageDrawable(context.getResources().getDrawable(R.drawable.file));
         }
         return view;
