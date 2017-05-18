@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView listView_;
     private ListAdapter listAdapter_;
     private EditText toolbarTitle_;
-    private File file_;
+    private File currentShowingPath_;
 
     private static void onFileSelected(String path, @NonNull Context context)
             throws ActivityNotFoundException {
@@ -41,9 +41,9 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
         String mime = "*/*";
         MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-        if (mimeTypeMap.hasExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()))) {
-            mime = mimeTypeMap.getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.
-                    toString()));
+        String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+        if (mimeTypeMap.hasExtension(fileExtension)) {
+            mime = mimeTypeMap.getMimeTypeFromExtension(fileExtension);
         }
         intent.setDataAndType(uri, mime).addFlags(FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                fillListView(file_.getParentFile());
+                fillListView(currentShowingPath_.getParentFile());
                 break;
         }
         return true;
@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void fillListView(File file) {
         listAdapter_ = new ListAdapter(this, file);
-        file_ = file;
+        currentShowingPath_ = file;
         if (file.getPath().equals(MAIN_PATH)) {
             toolbarTitle_.setText(R.string.root_directory);
         } else {
