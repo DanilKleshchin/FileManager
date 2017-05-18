@@ -75,29 +75,10 @@ class ListAdapter extends BaseAdapter {
     }
 
     private void fillList(ArrayList<File> file) {
-        //Collections.sort(file, new SortFileName());
-//        Collections.sort(file, new FileNameComparator());
         Collections.sort(file, new FileNameComparator());
     }
 
-    private class SortFileName implements Comparator<File> {
-        @Override
-        public int compare(File f1, File f2) {
-            return f1.getName().compareTo(f2.getName());
-        }
-    }
-
     private class FileNameComparator implements Comparator<File> {
-        /*@Override
-        public int compare(File f1, File f2) {
-            if (f1.isDirectory() == f2.isDirectory())
-                return 0;
-            else if (f1.isDirectory() && !f2.isDirectory())
-                return -1;
-            else
-                return 1;
-        }
-    }*/
         @Override
         public int compare(File lhs, File rhs) {
             if (lhs.isDirectory() == rhs.isDirectory()) {
