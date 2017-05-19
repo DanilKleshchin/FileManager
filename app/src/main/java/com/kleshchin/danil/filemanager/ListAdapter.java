@@ -9,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +26,12 @@ class ListAdapter extends BaseAdapter {
 
     ListAdapter(@NonNull Context context, File file) {
         context_ = context;
-        file_ = new ArrayList<>(Arrays.asList(file.listFiles()));
-        fillList(file_);
+        try {
+            file_ = new ArrayList<>(Arrays.asList(file.listFiles()));
+            fillList(file_);
+        } catch (NullPointerException e) {
+            file_ = new ArrayList<>();
+        }
     }
 
     private final static class ViewHolder {

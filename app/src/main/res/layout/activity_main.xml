@@ -5,15 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:id="@+id/activity_main"
     tools:context="com.kleshchin.danil.filemanager.MainActivity">
 
-    <include
+    <!--<include
         android:id="@+id/main_toolbar"
-        layout="@layout/toolbar" />
-
-    <ListView
-        android:id="@+id/listView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        layout="@layout/toolbar" />-->
 
 </LinearLayout>
