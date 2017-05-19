@@ -1,6 +1,9 @@
 package com.kleshchin.danil.filemanager;
 
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -9,8 +12,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         FragmentOfList listFragment = new FragmentOfList();
-        getSupportFragmentManager().beginTransaction().replace(R.id.activity_main, listFragment).commit();
+        replaceFragment(listFragment);
     }
 
+    private void replaceFragment(Fragment fragment) {
+        FragmentManager manager = getSupportFragmentManager();
+        FragmentTransaction transaction = manager.beginTransaction();
+        transaction.replace(R.id.activity_main, fragment).addToBackStack(null).commit();
+    }
 }
-    git commit -m "Implement single fragment"
