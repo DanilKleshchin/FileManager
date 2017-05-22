@@ -6,9 +6,9 @@
     android:layout_height="match_parent"
     android:tag="listFragment">
 
-    <include
+    <!--<include
         android:id="@+id/fragment_toolbar"
-        layout="@layout/toolbar" />
+        layout="@layout/toolbar" />-->
 
     <ListView
         android:id="@+id/listView"

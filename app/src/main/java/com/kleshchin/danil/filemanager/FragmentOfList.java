@@ -3,6 +3,7 @@ package com.kleshchin.danil.filemanager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -13,6 +14,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -36,11 +38,10 @@ public class FragmentOfList extends Fragment {
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getPath();
     private static final String LIST_VIEW_STATE = "listview.state";
     private static final String PATH_KEY = "path";
-    private ListView listView_;
+    private AppCompatActivity currentActivity_;
 //    private static final String MAIN_PATH = "/storage";
 
-
-    private AppCompatActivity currentActivity_;
+    private ListView listView_;
     private ListAdapter listAdapter_;
     private EditText toolbarTitle_;
     private View currentView_;
@@ -68,11 +69,13 @@ public class FragmentOfList extends Fragment {
         currentActivity_ = (AppCompatActivity) getActivity();
         setHasOptionsMenu(true);
         listView_ = (ListView) view.findViewById(R.id.listView);
-        toolbarTitle_ = (EditText) view.findViewById(R.id.toolbar_title);
+        toolbarTitle_ = MainActivity.toolbarTitle;
         try {
             String path = getArguments().getString(PATH_KEY);
-            initToolbar(new File(path));
-            fillListView(new File(path));
+            if(path != null) {
+                initToolbar(new File(path));
+                fillListView(new File(path));
+            }
         } catch (NullPointerException e) {
             initToolbar(new File(MAIN_PATH));
             fillListView(new File(MAIN_PATH));
@@ -115,9 +118,7 @@ public class FragmentOfList extends Fragment {
     }
 
     private void initToolbar(File file) {
-        currentActivity_.setSupportActionBar((Toolbar) currentView_.findViewById(R.id.fragment_toolbar));
-        ActionBar actionBar;
-        actionBar = currentActivity_.getSupportActionBar();
+        ActionBar actionBar = MainActivity.actionBar;
         if (actionBar != null) {
             actionBar.setDisplayShowTitleEnabled(false);
             final Drawable upArrow = ContextCompat.getDrawable(currentView_.getContext(),
@@ -138,11 +139,19 @@ public class FragmentOfList extends Fragment {
     }
 
     private void addFragment(Fragment fragment) {
-        manager_.
-                beginTransaction().
-                replace(R.id.activity_main, fragment).
-                addToBackStack(null).
-                commit();
+        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            manager_.beginTransaction()
+                    .replace(R.id.place_holder, fragment)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                    .addToBackStack(null)
+                    .commit();
+        } else {
+            manager_.beginTransaction()
+                    .add(R.id.fragment_holder, fragment)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                    .addToBackStack(null)
+                    .commit();
+        }
     }
 
     private void fillListView(File file) {
