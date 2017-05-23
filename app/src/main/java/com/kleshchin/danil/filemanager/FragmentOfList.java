@@ -18,7 +18,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,10 +36,10 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 public class FragmentOfList extends Fragment {
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getPath();
     private static final String LIST_VIEW_STATE = "listview.state";
+    private static final String FILE_PATH = "filePath";
     private static final String PATH_KEY = "path";
-    private AppCompatActivity currentActivity_;
-//    private static final String MAIN_PATH = "/storage";
 
+    private AppCompatActivity currentActivity_;
     private ListView listView_;
     private ListAdapter listAdapter_;
     private EditText toolbarTitle_;
@@ -70,16 +69,14 @@ public class FragmentOfList extends Fragment {
         setHasOptionsMenu(true);
         listView_ = (ListView) view.findViewById(R.id.listView);
         toolbarTitle_ = MainActivity.toolbarTitle;
-        try {
-            String path = getArguments().getString(PATH_KEY);
-            if(path != null) {
-                initToolbar(new File(path));
-                fillListView(new File(path));
-            }
-        } catch (NullPointerException e) {
-            initToolbar(new File(MAIN_PATH));
-            fillListView(new File(MAIN_PATH));
-        }
+//        try {
+//            String path = getArguments().getString(PATH_KEY);
+//            if (path != null) {
+//                fillListView(new File(path));
+//            }
+//        } catch (NullPointerException e) {
+//            fillListView(new File(MAIN_PATH));
+//        }
         manager_ = currentActivity_.getSupportFragmentManager();
         listView_.setOnItemClickListener(new ItemClickListener());
         return view;
@@ -95,12 +92,27 @@ public class FragmentOfList extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable(LIST_VIEW_STATE, listView_.onSaveInstanceState());
+        outState.putParcelable(FILE_PATH, listView_.onSaveInstanceState());
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        try {
+            String path = getArguments().getString(PATH_KEY);
+            if (path != null) {
+                fillListView(new File(path));
+            }
+        } catch (NullPointerException e) {
+            fillListView(new File(MAIN_PATH));
+        }
         if (savedInstanceState != null) {
+            FragmentOfList fragment = new FragmentOfList();
+            Bundle args = new Bundle();
+            args.putString(PATH_KEY, savedInstanceState.getString(FILE_PATH));
+            fragment.setArguments(args);
+//            addFragment(fragment);
+
             Parcelable listViewState = savedInstanceState.getParcelable(LIST_VIEW_STATE);
             listView_.onRestoreInstanceState(listViewState);
         }
@@ -138,19 +150,42 @@ public class FragmentOfList extends Fragment {
         }
     }
 
-    private void addFragment(Fragment fragment) {
-        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+    private void addFragment(Fragment fragment, File file) {
+        String path = file.getParent();
+        prepareStackForAdding(path);
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             manager_.beginTransaction()
                     .replace(R.id.place_holder, fragment)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-                    .addToBackStack(null)
+                    .addToBackStack(path)
                     .commit();
         } else {
             manager_.beginTransaction()
-                    .add(R.id.fragment_holder, fragment)
+                    .add(R.id.fragment_holder, fragment, path)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-                    .addToBackStack(null)
+                    .addToBackStack(path)
                     .commit();
+        }
+    }
+
+    private void prepareStackForAdding(String path) {
+        int index = 0;
+        for (int i = 1; i < manager_.getBackStackEntryCount(); i++) {
+            try {
+                String name = manager_.getBackStackEntryAt(i).getName();
+                if (name.equalsIgnoreCase(path)) {
+                    index = i;
+                    break;
+                }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
+        }
+        if(index != 0) {
+            while (index != manager_.getBackStackEntryCount()) {
+                manager_.popBackStack();
+                ++index;
+            }
         }
     }
 
@@ -170,12 +205,13 @@ public class FragmentOfList extends Fragment {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
             String path = listAdapter_.getItem(i).getPath();
-            if (new File(path).isDirectory()) {
+            File file = new File(path);
+            if (file.isDirectory()) {
                 FragmentOfList fragment = new FragmentOfList();
                 Bundle args = new Bundle();
                 args.putString(PATH_KEY, path);
                 fragment.setArguments(args);
-                addFragment(fragment);
+                addFragment(fragment, file);
             } else {
                 try {
                     onFileSelected(path, currentView_.getContext());
