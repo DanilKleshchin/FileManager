@@ -26,6 +26,7 @@ import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.io.File;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -38,6 +39,8 @@ public class FragmentOfList extends Fragment {
     private static final String LIST_VIEW_STATE = "listview.state";
     private static final String FILE_PATH = "filePath";
     private static final String PATH_KEY = "path";
+
+    private static File currentPath_;
 
     private AppCompatActivity currentActivity_;
     private ListView listView_;
@@ -69,14 +72,6 @@ public class FragmentOfList extends Fragment {
         setHasOptionsMenu(true);
         listView_ = (ListView) view.findViewById(R.id.listView);
         toolbarTitle_ = MainActivity.toolbarTitle;
-//        try {
-//            String path = getArguments().getString(PATH_KEY);
-//            if (path != null) {
-//                fillListView(new File(path));
-//            }
-//        } catch (NullPointerException e) {
-//            fillListView(new File(MAIN_PATH));
-//        }
         manager_ = currentActivity_.getSupportFragmentManager();
         listView_.setOnItemClickListener(new ItemClickListener());
         return view;
@@ -111,8 +106,6 @@ public class FragmentOfList extends Fragment {
             Bundle args = new Bundle();
             args.putString(PATH_KEY, savedInstanceState.getString(FILE_PATH));
             fragment.setArguments(args);
-//            addFragment(fragment);
-
             Parcelable listViewState = savedInstanceState.getParcelable(LIST_VIEW_STATE);
             listView_.onRestoreInstanceState(listViewState);
         }
@@ -122,6 +115,17 @@ public class FragmentOfList extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
+                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    String parent = currentPath_.getParent();
+                    if (parent.equals(MAIN_PATH)) {
+                        toolbarTitle_.setText(R.string.root_directory);
+                    } else {
+                        toolbarTitle_.setText(parent);
+                    }
+                    toolbarTitle_.setSelection(toolbarTitle_.getText().length());
+                    initToolbar(currentPath_.getParentFile());
+                    currentPath_ = new File(parent);
+                }
                 manager_.popBackStack();
                 return true;
             default:
@@ -151,8 +155,8 @@ public class FragmentOfList extends Fragment {
     }
 
     private void addFragment(Fragment fragment, File file) {
-        String path = file.getParent();
-        prepareStackForAdding(path);
+        String path = file.getPath();
+        manager_.popBackStack(file.getParent(), 0);
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             manager_.beginTransaction()
                     .replace(R.id.place_holder, fragment)
@@ -166,39 +170,20 @@ public class FragmentOfList extends Fragment {
                     .addToBackStack(path)
                     .commit();
         }
-    }
-
-    private void prepareStackForAdding(String path) {
-        int index = 0;
-        for (int i = 1; i < manager_.getBackStackEntryCount(); i++) {
-            try {
-                String name = manager_.getBackStackEntryAt(i).getName();
-                if (name.equalsIgnoreCase(path)) {
-                    index = i;
-                    break;
-                }
-            } catch (NullPointerException e) {
-                e.printStackTrace();
-            }
-        }
-        if(index != 0) {
-            while (index != manager_.getBackStackEntryCount()) {
-                manager_.popBackStack();
-                ++index;
-            }
-        }
+        currentPath_ = file;
     }
 
     private void fillListView(File file) {
-        listAdapter_ = new ListAdapter(currentView_.getContext(), file);
-        if (file.getPath().equals(MAIN_PATH)) {
-            toolbarTitle_.setText(R.string.root_directory);
-        } else {
-            toolbarTitle_.setText(file.getPath());
-        }
-        toolbarTitle_.setSelection(toolbarTitle_.getText().length());
-        initToolbar(file);
-        listView_.setAdapter(listAdapter_);
+            listAdapter_ = new ListAdapter(currentView_.getContext(), file);
+            String path = file.getPath();
+            if (path.equals(MAIN_PATH)) {
+                toolbarTitle_.setText(R.string.root_directory);
+            } else {
+                toolbarTitle_.setText(path);
+            }
+            toolbarTitle_.setSelection(toolbarTitle_.getText().length());
+            initToolbar(file);
+            listView_.setAdapter(listAdapter_);
     }
 
     private class ItemClickListener implements AdapterView.OnItemClickListener {
