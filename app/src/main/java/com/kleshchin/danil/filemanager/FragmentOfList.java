@@ -9,7 +9,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -26,21 +25,22 @@ import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
+
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 /**
  * Created by Danil Kleshchin on 19.05.2017.
  */
-public class FragmentOfList extends Fragment {
+public class FragmentOfList extends Fragment implements MainActivity.OnBackPressedListener{
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getPath();
-    private static final String LIST_VIEW_STATE = "listview.state";
-    private static final String FILE_PATH = "filePath";
     private static final String PATH_KEY = "path";
 
-    private static File currentPath_;
+    private static File currentFile_ = new File(MAIN_PATH);
 
     private AppCompatActivity currentActivity_;
     private ListView listView_;
@@ -71,7 +71,8 @@ public class FragmentOfList extends Fragment {
         currentActivity_ = (AppCompatActivity) getActivity();
         setHasOptionsMenu(true);
         listView_ = (ListView) view.findViewById(R.id.listView);
-        toolbarTitle_ = MainActivity.toolbarTitle;
+        listView_.setEmptyView(view.findViewById(R.id.list_view_empty_state));
+        toolbarTitle_ = MainActivity.toolbarTitle_;
         manager_ = currentActivity_.getSupportFragmentManager();
         listView_.setOnItemClickListener(new ItemClickListener());
         return view;
@@ -86,28 +87,35 @@ public class FragmentOfList extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelable(LIST_VIEW_STATE, listView_.onSaveInstanceState());
-        outState.putParcelable(FILE_PATH, listView_.onSaveInstanceState());
+        outState.putString(PATH_KEY, currentFile_.getPath());
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        try {
-            String path = getArguments().getString(PATH_KEY);
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            String path = arguments.getString(PATH_KEY);
             if (path != null) {
                 fillListView(new File(path));
             }
-        } catch (NullPointerException e) {
-            fillListView(new File(MAIN_PATH));
-        }
-        if (savedInstanceState != null) {
-            FragmentOfList fragment = new FragmentOfList();
-            Bundle args = new Bundle();
-            args.putString(PATH_KEY, savedInstanceState.getString(FILE_PATH));
-            fragment.setArguments(args);
-            Parcelable listViewState = savedInstanceState.getParcelable(LIST_VIEW_STATE);
-            listView_.onRestoreInstanceState(listViewState);
+        } else {
+            ArrayList<File> arr = new ArrayList<>();
+            File temp = currentFile_;
+            while (!temp.getPath().equals(MAIN_PATH)) {
+                arr.add(temp);
+                temp = temp.getParentFile();
+            }
+            arr.add(new File(MAIN_PATH));
+            manager_.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            Collections.reverse(arr);
+            for (File file : arr) {
+                FragmentOfList fragment = new FragmentOfList();
+                Bundle args = new Bundle();
+                args.putString(PATH_KEY, file.getPath());
+                fragment.setArguments(args);
+                addFragment(fragment, file);
+            }
         }
     }
 
@@ -115,26 +123,20 @@ public class FragmentOfList extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    String parent = currentPath_.getParent();
-                    if (parent.equals(MAIN_PATH)) {
-                        toolbarTitle_.setText(R.string.root_directory);
-                    } else {
-                        toolbarTitle_.setText(parent);
-                    }
-                    toolbarTitle_.setSelection(toolbarTitle_.getText().length());
-                    initToolbar(currentPath_.getParentFile());
-                    currentPath_ = new File(parent);
-                }
-                manager_.popBackStack();
+                backPressedState();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        backPressedState();
+    }
+
     private void initToolbar(File file) {
-        ActionBar actionBar = MainActivity.actionBar;
+        ActionBar actionBar = MainActivity.actionBar_;
         if (actionBar != null) {
             actionBar.setDisplayShowTitleEnabled(false);
             final Drawable upArrow = ContextCompat.getDrawable(currentView_.getContext(),
@@ -154,6 +156,21 @@ public class FragmentOfList extends Fragment {
         }
     }
 
+    private void backPressedState() {
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            String parent = currentFile_.getParent();
+            if (parent.equals(MAIN_PATH)) {
+                toolbarTitle_.setText(R.string.root_directory);
+            } else {
+                toolbarTitle_.setText(parent);
+            }
+            toolbarTitle_.setSelection(toolbarTitle_.getText().length());
+            initToolbar(currentFile_.getParentFile());
+            currentFile_ = new File(parent);
+        }
+        manager_.popBackStack();
+    }
+
     private void addFragment(Fragment fragment, File file) {
         String path = file.getPath();
         manager_.popBackStack(file.getParent(), 0);
@@ -170,20 +187,20 @@ public class FragmentOfList extends Fragment {
                     .addToBackStack(path)
                     .commit();
         }
-        currentPath_ = file;
+        currentFile_ = file;
     }
 
     private void fillListView(File file) {
-            listAdapter_ = new ListAdapter(currentView_.getContext(), file);
-            String path = file.getPath();
-            if (path.equals(MAIN_PATH)) {
-                toolbarTitle_.setText(R.string.root_directory);
-            } else {
-                toolbarTitle_.setText(path);
-            }
-            toolbarTitle_.setSelection(toolbarTitle_.getText().length());
-            initToolbar(file);
-            listView_.setAdapter(listAdapter_);
+        listAdapter_ = new ListAdapter(currentView_.getContext(), file);
+        String path = file.getPath();
+        if (path.equals(MAIN_PATH)) {
+            toolbarTitle_.setText(R.string.root_directory);
+        } else {
+            toolbarTitle_.setText(path);
+        }
+        toolbarTitle_.setSelection(toolbarTitle_.getText().length());
+        initToolbar(file);
+        listView_.setAdapter(listAdapter_);
     }
 
     private class ItemClickListener implements AdapterView.OnItemClickListener {

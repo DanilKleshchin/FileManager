@@ -34,11 +34,6 @@ class ListAdapter extends BaseAdapter {
         }
     }
 
-    private final static class ViewHolder {
-        TextView fileName;
-        ImageView fileImage;
-    }
-
     @Override
     public int getCount() {
         return file_.size();
@@ -74,6 +69,11 @@ class ListAdapter extends BaseAdapter {
             viewHolder.fileImage.setImageDrawable(ContextCompat.getDrawable(context_, R.drawable.file));
         }
         return view;
+    }
+
+    private final static class ViewHolder {
+        TextView fileName;
+        ImageView fileImage;
     }
 
     private void fillList(ArrayList<File> file) {
