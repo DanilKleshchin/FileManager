@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
+import android.widget.Toast;
 
 import java.io.File;
 
@@ -68,7 +69,11 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     public void onToolbarTextChangeListener(@NonNull String toolbarText, @NonNull File file) {
         toolbarTitle_.setText(toolbarText);
         toolbarTitle_.setSelection(toolbarTitle_.getText().length());
-        initToolbar(file);
+        try {
+            initToolbar(file);
+        } catch (IllegalStateException e) {
+            Toast.makeText(this, R.string.failed_to_get_the_action_bar, Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -121,25 +126,23 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     }
 
 
-
-    private void initToolbar(@NonNull File file) {
-        ActionBar actionBar = MainActivity.actionBar_;
-        if (actionBar != null) {
-            actionBar.setDisplayShowTitleEnabled(false);
-            final Drawable upArrow = ContextCompat.getDrawable(this,
-                    R.drawable.ic_arrow_back_black_36dp);
-            upArrow.setColorFilter(ContextCompat.getColor(this, R.color.colorWhite),
-                    PorterDuff.Mode.SRC_ATOP);
-            String pathToFile = file.getPath();
-            if (!pathToFile.equals(MAIN_PATH)) {
-                actionBar.setHomeAsUpIndicator(upArrow);
-                actionBar.setDisplayHomeAsUpEnabled(true);
-                actionBar.setDisplayShowHomeEnabled(true);
-            } else {
-                actionBar.setHomeButtonEnabled(false);
-                actionBar.setDisplayHomeAsUpEnabled(false);
-                actionBar.setDisplayShowHomeEnabled(false);
-            }
+    private void initToolbar(@NonNull File file) throws IllegalStateException {
+        if (actionBar_ == null) {
+            return;
+        }
+        actionBar_.setDisplayShowTitleEnabled(false);
+        final Drawable upArrow = ContextCompat.getDrawable(this,
+                R.drawable.ic_arrow_back_black_36dp);
+        upArrow.setColorFilter(ContextCompat.getColor(this, R.color.colorWhite),
+                PorterDuff.Mode.SRC_ATOP);
+        if (!file.getPath().equals(MAIN_PATH)) {
+            actionBar_.setHomeAsUpIndicator(upArrow);
+            actionBar_.setDisplayHomeAsUpEnabled(true);
+            actionBar_.setDisplayShowHomeEnabled(true);
+        } else {
+            actionBar_.setHomeButtonEnabled(false);
+            actionBar_.setDisplayHomeAsUpEnabled(false);
+            actionBar_.setDisplayShowHomeEnabled(false);
         }
     }
 

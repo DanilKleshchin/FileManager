@@ -49,7 +49,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener 
         return fragment;
     }
 
-    private static void onFileSelected(@NonNull String path, @NonNull Context context)
+    private static void callActivityForFile(@NonNull String path, @NonNull Context context)
             throws ActivityNotFoundException {
         Uri uri = Uri.fromFile(new File(path));
         Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
@@ -159,31 +159,27 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener 
         popBackStackListener.onPopBackStackListener(0);
     }
 
-
     private void fillListView(@NonNull File file) {
-        OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
-        listAdapter_ = new ListAdapter(currentView_.getContext(), file);
+        listAdapter_ = new ListAdapter(file);
         String path = file.getPath();
-        if (path.equals(MAIN_PATH)) {
-            listener.onToolbarTextChangeListener(getResources().getString(R.string.root_directory), file);
-        } else {
-            listener.onToolbarTextChangeListener(path, file);
-        }
         listView_.setAdapter(listAdapter_);
+        OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
+        listener.onToolbarTextChangeListener((path.equals(MAIN_PATH))
+                ? getResources().getString(R.string.root_directory)
+                : path, file);
     }
 
     private class ItemClickListener implements AdapterView.OnItemClickListener {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-            String path = listAdapter_.getItem(i).getPath();
-            File file = new File(path);
+            File file = listAdapter_.getItem(i);
             if (file.isDirectory()) {
                 OnListItemClickListener listener = (OnListItemClickListener) currentActivity_;
                 listener.onListItemClickListener(file);
                 currentFile_ = file;
             } else {
                 try {
-                    onFileSelected(path, currentView_.getContext());
+                    callActivityForFile(file.getPath(), currentView_.getContext());
                 } catch (ActivityNotFoundException e) {
                     Toast.makeText(currentView_.getContext(), R.string.activity_not_found,
                             Toast.LENGTH_LONG).show();

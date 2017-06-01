@@ -4,4 +4,5 @@
     <string name="activity_not_found">There is no application registered to handle the type
     of file selected</string>
     <string name="this_directory_is_empty">This directory is empty</string>
+    <string name="failed_to_get_the_action_bar">"Failed to get the action bar"</string>
 </resources>

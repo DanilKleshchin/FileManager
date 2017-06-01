@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,14 +22,11 @@ import java.util.Comparator;
 class ListAdapter extends BaseAdapter {
     @NonNull
     private ArrayList<File> file_;
-    @NonNull
-    private Context context_;
 
-    ListAdapter(@NonNull Context context, File file) {
-        context_ = context;
+    ListAdapter(File file) {
         try {
             file_ = new ArrayList<>(Arrays.asList(file.listFiles()));
-            fillList(file_);
+            Collections.sort(file_, new FileNameComparator());
         } catch (NullPointerException e) {
             file_ = new ArrayList<>();
         }
@@ -51,9 +49,10 @@ class ListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
+        Context context = viewGroup.getContext();
         ViewHolder viewHolder;
         if (view == null) {
-            view = LayoutInflater.from(context_).inflate(R.layout.list_items, viewGroup, false);
+            view = LayoutInflater.from(context).inflate(R.layout.list_items, viewGroup, false);
             viewHolder = new ViewHolder();
             viewHolder.fileName = (TextView) view.findViewById(R.id.fileName);
             viewHolder.fileImage = (ImageView) view.findViewById(R.id.fileImage);
@@ -63,21 +62,15 @@ class ListAdapter extends BaseAdapter {
         }
         File file = getItem(i);
         viewHolder.fileName.setText(file.getName());
-        if (file.isDirectory()) {
-            viewHolder.fileImage.setImageDrawable(ContextCompat.getDrawable(context_, R.drawable.folder));
-        } else {
-            viewHolder.fileImage.setImageDrawable(ContextCompat.getDrawable(context_, R.drawable.file));
-        }
+        viewHolder.fileImage.setImageDrawable((file.isDirectory())
+                ? (ContextCompat.getDrawable(context, R.drawable.folder))
+                : (ContextCompat.getDrawable(context, R.drawable.file)));
         return view;
     }
 
     private final static class ViewHolder {
         TextView fileName;
         ImageView fileImage;
-    }
-
-    private void fillList(ArrayList<File> file) {
-        Collections.sort(file, new FileNameComparator());
     }
 
     private class FileNameComparator implements Comparator<File> {
