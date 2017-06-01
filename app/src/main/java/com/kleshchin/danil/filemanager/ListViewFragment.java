@@ -11,8 +11,6 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -32,17 +30,26 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 /**
  * Created by Danil Kleshchin on 19.05.2017.
  */
-public class FragmentOfList extends Fragment implements OnBackPressedListener {
+public class ListViewFragment extends Fragment implements OnBackPressedListener {
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getPath();
     private static final String PATH_KEY = "path";
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
-    static File currentFile_ = new File(MAIN_PATH);
+    private static File currentFile_ = new File(MAIN_PATH);
     private AppCompatActivity currentActivity_;
     private ListView listView_;
     private ListAdapter listAdapter_;
     private View currentView_;
 
-    private static void onFileSelected(String path, @NonNull Context context)
+    @NonNull
+    public static ListViewFragment newInstance(@NonNull String path) {
+        ListViewFragment fragment = new ListViewFragment();
+        Bundle args = new Bundle();
+        args.putString(PATH_KEY, path);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    private static void onFileSelected(@NonNull String path, @NonNull Context context)
             throws ActivityNotFoundException {
         Uri uri = Uri.fromFile(new File(path));
         Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
@@ -93,7 +100,7 @@ public class FragmentOfList extends Fragment implements OnBackPressedListener {
             }
         } else {
             SharedPreferences preferences = currentActivity_.getPreferences(Context.MODE_PRIVATE);
-            String lastPath = preferences.getString(LAST_FILE_PATH, "");;
+            String lastPath = preferences.getString(LAST_FILE_PATH, "");
             if (!lastPath.equals("")) {
                 currentFile_ = new File(lastPath);
             }
@@ -108,7 +115,7 @@ public class FragmentOfList extends Fragment implements OnBackPressedListener {
             popBackStackListener.onPopBackStackListener(1);
             Collections.reverse(arr);
             for (File file : arr) {
-                FragmentOfList fragment = new FragmentOfList();
+                ListViewFragment fragment = new ListViewFragment();
                 Bundle args = new Bundle();
                 args.putString(PATH_KEY, file.getPath());
                 fragment.setArguments(args);
@@ -153,7 +160,7 @@ public class FragmentOfList extends Fragment implements OnBackPressedListener {
     }
 
 
-    private void fillListView(File file) {
+    private void fillListView(@NonNull File file) {
         OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
         listAdapter_ = new ListAdapter(currentView_.getContext(), file);
         String path = file.getPath();
@@ -173,6 +180,7 @@ public class FragmentOfList extends Fragment implements OnBackPressedListener {
             if (file.isDirectory()) {
                 OnListItemClickListener listener = (OnListItemClickListener) currentActivity_;
                 listener.onListItemClickListener(file);
+                currentFile_ = file;
             } else {
                 try {
                     onFileSelected(path, currentView_.getContext());
@@ -193,7 +201,7 @@ public class FragmentOfList extends Fragment implements OnBackPressedListener {
     }
 
     interface OnAddFragmentListener {
-        void onAddFragmentListener(FragmentOfList fragment, File file);
+        void onAddFragmentListener(ListViewFragment fragment, File file);
     }
 
     interface OnPopBackStackListener {

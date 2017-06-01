@@ -1,12 +1,12 @@
 package com.kleshchin.danil.filemanager;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -19,23 +19,21 @@ import android.widget.HorizontalScrollView;
 
 import java.io.File;
 
-public class MainActivity extends AppCompatActivity implements FragmentOfList.OnToolbarTextChangeListener,
-        FragmentOfList.OnListItemClickListener, FragmentOfList.OnAddFragmentListener,
-        FragmentOfList.OnPopBackStackListener, FragmentOfList.OnSaveCurrentFile{
-    private static final String PATH_KEY = "path";
+public class MainActivity extends AppCompatActivity implements ListViewFragment.OnToolbarTextChangeListener,
+        ListViewFragment.OnListItemClickListener, ListViewFragment.OnAddFragmentListener,
+        ListViewFragment.OnPopBackStackListener, ListViewFragment.OnSaveCurrentFile {
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getPath();
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
     public static ActionBar actionBar_;
     private EditText toolbarTitle_;
     private FragmentManager manager_;
-    private HorizontalScrollView scrollView;
-    private SharedPreferences preferences;
+    private HorizontalScrollView scrollView_;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        FragmentOfList listFragment = new FragmentOfList();
+        ListViewFragment listFragment = new ListViewFragment();
         replaceFragment(listFragment);
         setSupportActionBar((Toolbar) findViewById(R.id.main_toolbar));
         actionBar_ = getSupportActionBar();
@@ -67,14 +65,14 @@ public class MainActivity extends AppCompatActivity implements FragmentOfList.On
     }
 
     @Override
-    public void onToolbarTextChangeListener(String toolbarText, File file) {
+    public void onToolbarTextChangeListener(@NonNull String toolbarText, @NonNull File file) {
         toolbarTitle_.setText(toolbarText);
         toolbarTitle_.setSelection(toolbarTitle_.getText().length());
         initToolbar(file);
     }
 
     @Override
-    public void onAddFragmentListener(FragmentOfList fragment, File file) {
+    public void onAddFragmentListener(@NonNull ListViewFragment fragment, @NonNull File file) {
         addFragment(fragment, file);
     }
 
@@ -91,23 +89,20 @@ public class MainActivity extends AppCompatActivity implements FragmentOfList.On
     }
 
     @Override
-    public void onListItemClickListener(File file) {
-        FragmentOfList fragment = new FragmentOfList();
-        Bundle args = new Bundle();
-        args.putString(PATH_KEY, file.getPath());
-        fragment.setArguments(args);
+    public void onListItemClickListener(@NonNull File file) {
+        ListViewFragment fragment = ListViewFragment.newInstance(file.getPath());
         addFragment(fragment, file);
     }
 
     @Override
-    public void onSaveCurrentFile(String path) {
+    public void onSaveCurrentFile(@NonNull String path) {
         SharedPreferences preferences = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(LAST_FILE_PATH, path);
         editor.apply();
     }
 
-    private void addFragment(Fragment fragment, File file) {
+    private void addFragment(@NonNull Fragment fragment, @NonNull File file) {
         String path = file.getPath();
         manager_.popBackStack(file.getParent(), 0);
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -123,10 +118,11 @@ public class MainActivity extends AppCompatActivity implements FragmentOfList.On
                     .addToBackStack(path)
                     .commit();
         }
-        FragmentOfList.currentFile_ = file;
     }
 
-    private void initToolbar(File file) {
+
+
+    private void initToolbar(@NonNull File file) {
         ActionBar actionBar = MainActivity.actionBar_;
         if (actionBar != null) {
             actionBar.setDisplayShowTitleEnabled(false);
@@ -147,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements FragmentOfList.On
         }
     }
 
-    private void replaceFragment(Fragment fragment) {
+    private void replaceFragment(@NonNull Fragment fragment) {
         FragmentManager manager = getSupportFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
         manager.popBackStack();
@@ -161,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements FragmentOfList.On
     private class HorizontalScrollViewListener implements Runnable {
         @Override
         public void run() {
-            scrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
+            scrollView_.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
         }
     }
 
@@ -172,8 +168,8 @@ public class MainActivity extends AppCompatActivity implements FragmentOfList.On
                 finish();
             } else {
                 if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    scrollView = (HorizontalScrollView) findViewById(R.id.horizontal_scroll_view);
-                    scrollView.postDelayed(new HorizontalScrollViewListener(), 100L);
+                    scrollView_ = (HorizontalScrollView) findViewById(R.id.horizontal_scroll_view);
+                    scrollView_.postDelayed(new HorizontalScrollViewListener(), 100L);
                 }
             }
         }
