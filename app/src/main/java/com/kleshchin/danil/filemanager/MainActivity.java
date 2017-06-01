@@ -1,23 +1,35 @@
 package com.kleshchin.danil.filemanager;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.PersistableBundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 
-public class MainActivity extends AppCompatActivity {
+import java.io.File;
+
+public class MainActivity extends AppCompatActivity implements FragmentOfList.OnToolbarTextChangeListener,
+        FragmentOfList.OnListItemClickListener, FragmentOfList.OnAddFragmentListener,
+        FragmentOfList.OnPopBackStackListener, FragmentOfList.OnSaveCurrentFile{
+    private static final String PATH_KEY = "path";
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getPath();
-    private static final String FRAGMENT_STATE = "Fragment";
+    private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
     public static ActionBar actionBar_;
-    public static EditText toolbarTitle_;
-    private FragmentOfList fragment_;
+    private EditText toolbarTitle_;
+    private FragmentManager manager_;
+    private HorizontalScrollView scrollView;
+    private SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,18 +40,21 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar((Toolbar) findViewById(R.id.main_toolbar));
         actionBar_ = getSupportActionBar();
         toolbarTitle_ = (EditText) findViewById(R.id.toolbar_title);
-        /*if(savedInstanceState != null) {
-            fragment_ = (FragmentOfList) getSupportFragmentManager()
-                    .getFragment(savedInstanceState, FRAGMENT_STATE);
-        }*/
+        manager_ = getSupportFragmentManager();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        manager_.addOnBackStackChangedListener(new BackStackListener());
     }
 
     @Override
     public void onBackPressed() {
         FragmentManager fm = getSupportFragmentManager();
         OnBackPressedListener backPressedListener = null;
-        for (Fragment fragment: fm.getFragments()) {
-            if (fragment instanceof  OnBackPressedListener) {
+        for (Fragment fragment : fm.getFragments()) {
+            if (fragment instanceof OnBackPressedListener) {
                 backPressedListener = (OnBackPressedListener) fragment;
                 break;
             }
@@ -51,25 +66,120 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onToolbarTextChangeListener(String toolbarText, File file) {
+        toolbarTitle_.setText(toolbarText);
+        toolbarTitle_.setSelection(toolbarTitle_.getText().length());
+        initToolbar(file);
+    }
 
-    /*@Override
-    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
-        super.onSaveInstanceState(outState, outPersistentState);
-        getSupportFragmentManager().putFragment(outState, FRAGMENT_STATE, fragment_);
-    }*/
+    @Override
+    public void onAddFragmentListener(FragmentOfList fragment, File file) {
+        addFragment(fragment, file);
+    }
+
+    @Override
+    public void onPopBackStackListener(int state) {
+        switch (state) {
+            case 0:
+                manager_.popBackStack();
+                break;
+            case 1:
+                manager_.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                break;
+        }
+    }
+
+    @Override
+    public void onListItemClickListener(File file) {
+        FragmentOfList fragment = new FragmentOfList();
+        Bundle args = new Bundle();
+        args.putString(PATH_KEY, file.getPath());
+        fragment.setArguments(args);
+        addFragment(fragment, file);
+    }
+
+    @Override
+    public void onSaveCurrentFile(String path) {
+        SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(LAST_FILE_PATH, path);
+        editor.apply();
+    }
+
+    private void addFragment(Fragment fragment, File file) {
+        String path = file.getPath();
+        manager_.popBackStack(file.getParent(), 0);
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            manager_.beginTransaction()
+                    .replace(R.id.place_holder, fragment)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                    .addToBackStack(path)
+                    .commit();
+        } else {
+            manager_.beginTransaction()
+                    .add(R.id.fragment_holder, fragment, path)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                    .addToBackStack(path)
+                    .commit();
+        }
+        FragmentOfList.currentFile_ = file;
+    }
+
+    private void initToolbar(File file) {
+        ActionBar actionBar = MainActivity.actionBar_;
+        if (actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(false);
+            final Drawable upArrow = ContextCompat.getDrawable(this,
+                    R.drawable.ic_arrow_back_black_36dp);
+            upArrow.setColorFilter(ContextCompat.getColor(this, R.color.colorWhite),
+                    PorterDuff.Mode.SRC_ATOP);
+            String pathToFile = file.getPath();
+            if (!pathToFile.equals(MAIN_PATH)) {
+                actionBar.setHomeAsUpIndicator(upArrow);
+                actionBar.setDisplayHomeAsUpEnabled(true);
+                actionBar.setDisplayShowHomeEnabled(true);
+            } else {
+                actionBar.setHomeButtonEnabled(false);
+                actionBar.setDisplayHomeAsUpEnabled(false);
+                actionBar.setDisplayShowHomeEnabled(false);
+            }
+        }
+    }
 
     private void replaceFragment(Fragment fragment) {
         FragmentManager manager = getSupportFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
         manager.popBackStack();
-        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             transaction.replace(R.id.place_holder, fragment).addToBackStack(MAIN_PATH).commit();
         } else {
             transaction.replace(R.id.fragment_holder, fragment).addToBackStack(MAIN_PATH).commit();
         }
     }
 
-    public interface OnBackPressedListener {
-        void onBackPressed();
+    private class HorizontalScrollViewListener implements Runnable {
+        @Override
+        public void run() {
+            scrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
+        }
     }
+
+    private class BackStackListener implements FragmentManager.OnBackStackChangedListener {
+        @Override
+        public void onBackStackChanged() {
+            if (manager_.getBackStackEntryCount() == 0) {
+                finish();
+            } else {
+                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    scrollView = (HorizontalScrollView) findViewById(R.id.horizontal_scroll_view);
+                    scrollView.postDelayed(new HorizontalScrollViewListener(), 100L);
+                }
+            }
+        }
+    }
+}
+
+interface OnBackPressedListener {
+    void onBackPressed();
 }
