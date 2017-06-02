@@ -2,7 +2,6 @@ package com.kleshchin.danil.filemanager;
 
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
@@ -69,11 +68,7 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     public void onToolbarTextChangeListener(@NonNull String toolbarText, @NonNull File file) {
         toolbarTitle_.setText(toolbarText);
         toolbarTitle_.setSelection(toolbarTitle_.getText().length());
-        try {
-            initToolbar(file);
-        } catch (IllegalStateException e) {
-            Toast.makeText(this, R.string.failed_to_get_the_action_bar, Toast.LENGTH_LONG).show();
-        }
+        initToolbar(file);
     }
 
     @Override
@@ -126,23 +121,18 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     }
 
 
-    private void initToolbar(@NonNull File file) throws IllegalStateException {
+    private void initToolbar(@NonNull File file) {
         if (actionBar_ == null) {
             return;
         }
         actionBar_.setDisplayShowTitleEnabled(false);
-        final Drawable upArrow = ContextCompat.getDrawable(this,
-                R.drawable.ic_arrow_back_black_36dp);
-        upArrow.setColorFilter(ContextCompat.getColor(this, R.color.colorWhite),
-                PorterDuff.Mode.SRC_ATOP);
         if (!file.getPath().equals(MAIN_PATH)) {
-            actionBar_.setHomeAsUpIndicator(upArrow);
+//            actionBar_.setDisplayShowHomeEnabled(true);
             actionBar_.setDisplayHomeAsUpEnabled(true);
-            actionBar_.setDisplayShowHomeEnabled(true);
         } else {
-            actionBar_.setHomeButtonEnabled(false);
+//            actionBar_.setHomeButtonEnabled(false);
             actionBar_.setDisplayHomeAsUpEnabled(false);
-            actionBar_.setDisplayShowHomeEnabled(false);
+//            actionBar_.setDisplayShowHomeEnabled(false);
         }
     }
 

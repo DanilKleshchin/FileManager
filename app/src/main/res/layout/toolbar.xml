@@ -3,21 +3,23 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/toolbar"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
+    android:minHeight="64dp"
     android:background="@color/colorPrimaryDark"
+    android:gravity="center"
     android:theme="@style/AppTheme.Base">
 
     <EditText
+        android:id="@+id/toolbar_title"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:singleLine="true"
-        android:textSize="18sp"
+        android:layout_height="?attr/actionBarSize"
+        android:layout_gravity="start"
         android:clickable="false"
         android:focusable="false"
-        android:gravity="center"
-        android:layout_gravity="center"
+        android:singleLine="true"
+        android:background="@android:color/transparent"
         android:textColor="@android:color/white"
-        android:inputType="textNoSuggestions"
-        android:id="@+id/toolbar_title" />
+        android:textSize="18sp"
+        android:inputType="textNoSuggestions" />
 
 </android.support.v7.widget.Toolbar>

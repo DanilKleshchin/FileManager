@@ -7,10 +7,6 @@
     android:id="@+id/listFragment"
     android:tag="listFragment">
 
-    <!--<include
-        android:id="@+id/fragment_toolbar"
-        layout="@layout/toolbar" />-->
-
     <ListView
         android:id="@+id/listView"
         android:layout_width="match_parent"
