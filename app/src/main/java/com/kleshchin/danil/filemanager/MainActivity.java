@@ -2,20 +2,17 @@ package com.kleshchin.danil.filemanager;
 
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
-import android.widget.Toast;
 
 import java.io.File;
 
@@ -120,19 +117,19 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
         }
     }
 
-
     private void initToolbar(@NonNull File file) {
         if (actionBar_ == null) {
             return;
         }
         actionBar_.setDisplayShowTitleEnabled(false);
+        actionBar_.setDisplayShowHomeEnabled(true);
         if (!file.getPath().equals(MAIN_PATH)) {
-//            actionBar_.setDisplayShowHomeEnabled(true);
             actionBar_.setDisplayHomeAsUpEnabled(true);
+            actionBar_.setLogo(null);
         } else {
-//            actionBar_.setHomeButtonEnabled(false);
+            actionBar_.setLogo(R.drawable.drawable_toolbar_logo);
+            actionBar_.setHomeButtonEnabled(false);
             actionBar_.setDisplayHomeAsUpEnabled(false);
-//            actionBar_.setDisplayShowHomeEnabled(false);
         }
     }
 
@@ -140,11 +137,12 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
         FragmentManager manager = getSupportFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
         manager.popBackStack();
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-            transaction.replace(R.id.place_holder, fragment).addToBackStack(MAIN_PATH).commit();
-        } else {
-            transaction.replace(R.id.fragment_holder, fragment).addToBackStack(MAIN_PATH).commit();
-        }
+
+        transaction.replace((getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT
+                ? R.id.place_holder
+                : R.id.fragment_holder), fragment)
+                .addToBackStack(MAIN_PATH)
+                .commit();
     }
 
     private class HorizontalScrollViewListener implements Runnable {

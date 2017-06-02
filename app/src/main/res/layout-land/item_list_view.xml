@@ -13,10 +13,10 @@
 
         <ImageView
             android:id="@+id/fileImage"
-            android:layout_width="52dp"
-            android:layout_height="52dp"
-            android:layout_marginLeft="24dp"
-            android:layout_marginRight="24dp"
+            android:layout_width="@dimen/image_view_land_width_height"
+            android:layout_height="@dimen/image_view_land_width_height"
+            android:layout_marginLeft="@dimen/land_orientation_margin"
+            android:layout_marginRight="@dimen/land_orientation_margin"
             app:srcCompat="@mipmap/ic_launcher" />
     </LinearLayout>
 
@@ -28,9 +28,9 @@
             android:id="@+id/fileName"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginRight="16dp"
+            android:layout_marginRight="@dimen/land_orientation_margin"
             android:textColor="@android:color/black"
-            android:textSize="20sp" />
+            android:textSize="@dimen/text_view_text_size" />
     </LinearLayout>
 
 </LinearLayout>

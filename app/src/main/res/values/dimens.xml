@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="linear_layout_portrait_height">56dp</dimen>
+    <dimen name="linear_layout_land_height">64dp</dimen>
+    <dimen name="image_view_portrait_width_height">40dp</dimen>
+    <dimen name="image_view_land_width_height">52dp</dimen>
+    <dimen name="portrait_orientation_margin">16dp</dimen>
+    <dimen name="land_orientation_margin">24dp</dimen>
+    <dimen name="text_view_text_size">20sp</dimen>
+    <dimen name="toolbar_text_size">18sp</dimen>
+    <dimen name="toolbar_land_margin">40dp</dimen>
+</resources>

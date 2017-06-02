@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.Toolbar
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v7.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/toolbar"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorPrimaryDark"
     android:minHeight="@dimen/linear_layout_land_height"
+    android:background="@color/colorPrimaryDark"
     android:theme="@style/AppTheme.Base">
 
     <EditText
         android:id="@+id/toolbar_title"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="?attr/actionBarSize"
-        android:background="@android:color/transparent"
+        android:layout_gravity="start"
+        android:layout_marginLeft="@dimen/toolbar_land_margin"
         android:clickable="false"
         android:focusable="false"
-        android:gravity="left|center"
-        android:inputType="textNoSuggestions"
         android:singleLine="true"
+        android:background="@android:color/transparent"
         android:textColor="@android:color/white"
-        android:textSize="@dimen/toolbar_text_size" />
+        android:textSize="@dimen/toolbar_text_size"
+        android:inputType="textNoSuggestions" />
 
 </android.support.v7.widget.Toolbar>
