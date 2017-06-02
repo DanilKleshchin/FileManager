@@ -52,7 +52,7 @@ class ListAdapter extends BaseAdapter {
         Context context = viewGroup.getContext();
         ViewHolder viewHolder;
         if (view == null) {
-            view = LayoutInflater.from(context).inflate(R.layout.list_items, viewGroup, false);
+            view = LayoutInflater.from(context).inflate(R.layout.item_list_view, viewGroup, false);
             viewHolder = new ViewHolder();
             viewHolder.fileName = (TextView) view.findViewById(R.id.fileName);
             viewHolder.fileImage = (ImageView) view.findViewById(R.id.fileImage);

@@ -66,7 +66,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.list_fragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_list, container, false);
         currentView_ = view;
         currentActivity_ = (AppCompatActivity) getActivity();
         setHasOptionsMenu(true);
