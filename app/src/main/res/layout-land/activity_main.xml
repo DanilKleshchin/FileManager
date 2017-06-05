@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/linear_layout_land_height">
-
-        <include
-            android:id="@+id/main_toolbar"
-            layout="@layout/layout_toolbar" />
-    </LinearLayout>
+    <include
+        android:id="@+id/main_toolbar"
+        layout="@layout/layout_toolbar" />
 
     <HorizontalScrollView
         android:id="@+id/horizontal_scroll_view"
@@ -20,7 +16,7 @@
         android:orientation="horizontal">
 
         <LinearLayout
-            android:id="@+id/fragment_holder"
+            android:id="@+id/view_for_replace"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:orientation="horizontal" />

@@ -104,13 +104,13 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
         manager_.popBackStack(file.getParent(), 0);
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             manager_.beginTransaction()
-                    .replace(R.id.place_holder, fragment)
+                    .replace(R.id.view_for_replace, fragment)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                     .addToBackStack(path)
                     .commit();
         } else {
             manager_.beginTransaction()
-                    .add(R.id.fragment_holder, fragment, path)
+                    .add(R.id.view_for_replace, fragment, path)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                     .addToBackStack(path)
                     .commit();
@@ -137,10 +137,7 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
         FragmentManager manager = getSupportFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
         manager.popBackStack();
-
-        transaction.replace((getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT
-                ? R.id.place_holder
-                : R.id.fragment_holder), fragment)
+        transaction.replace(R.id.view_for_replace, fragment)
                 .addToBackStack(MAIN_PATH)
                 .commit();
     }

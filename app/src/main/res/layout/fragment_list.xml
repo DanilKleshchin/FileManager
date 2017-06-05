@@ -16,7 +16,11 @@
         android:id="@+id/list_view_empty_state"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
         android:visibility="gone"
+        android:textSize="@dimen/text_view_text_size"
+        android:textColor="@android:color/black"
         android:text="@string/this_directory_is_empty"/>
 
 </LinearLayout>

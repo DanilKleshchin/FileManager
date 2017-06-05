@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<android.support.v7.widget.Toolbar
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/toolbar"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:minHeight="@dimen/linear_layout_land_height"
+    android:layout_height="?attr/actionBarSize"
     android:background="@color/colorPrimaryDark"
     android:theme="@style/AppTheme.Base">
 
@@ -13,7 +12,8 @@
         android:layout_width="wrap_content"
         android:layout_height="?attr/actionBarSize"
         android:layout_gravity="start"
-        android:layout_marginLeft="@dimen/toolbar_land_margin"
+        android:layout_marginLeft="@dimen/toolbar_margin"
+        android:layout_marginRight="@dimen/land_orientation_margin"
         android:clickable="false"
         android:focusable="false"
         android:singleLine="true"

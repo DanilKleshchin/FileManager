@@ -53,24 +53,30 @@ class ListAdapter extends BaseAdapter {
         ViewHolder viewHolder;
         if (view == null) {
             view = LayoutInflater.from(context).inflate(R.layout.item_list_view, viewGroup, false);
-            viewHolder = new ViewHolder();
-            viewHolder.fileName = (TextView) view.findViewById(R.id.fileName);
-            viewHolder.fileImage = (ImageView) view.findViewById(R.id.fileImage);
+            viewHolder = new ViewHolder(view);
             view.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) view.getTag();
         }
         File file = getItem(i);
         viewHolder.fileName.setText(file.getName());
-        viewHolder.fileImage.setImageDrawable((file.isDirectory())
-                ? (ContextCompat.getDrawable(context, R.drawable.folder))
-                : (ContextCompat.getDrawable(context, R.drawable.file)));
+        boolean directory = file.isDirectory();
+        viewHolder.fileImage.setImageDrawable(directory
+                ? (ContextCompat.getDrawable(context, R.mipmap.folder_image))
+                : (ContextCompat.getDrawable(context, R.mipmap.file_image)));
+        viewHolder.fileImage.setContentDescription(directory
+                ? (context.getString(R.string.directory_desc))
+                : (context.getString(R.string.file_desc)));
         return view;
     }
 
     private final static class ViewHolder {
         TextView fileName;
         ImageView fileImage;
+        ViewHolder(View view){
+            fileName = (TextView) view.findViewById(R.id.fileName);
+            fileImage = (ImageView) view.findViewById(R.id.fileImage);
+        }
     }
 
     private class FileNameComparator implements Comparator<File> {

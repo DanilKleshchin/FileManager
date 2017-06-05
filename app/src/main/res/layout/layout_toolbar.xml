@@ -3,15 +3,15 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/toolbar"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/linear_layout_land_height"
+    android:layout_height="?attr/actionBarSize"
     android:background="@color/colorPrimaryDark"
-    android:minHeight="@dimen/linear_layout_land_height"
     android:theme="@style/AppTheme.Base">
 
     <EditText
         android:id="@+id/toolbar_title"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        android:layout_marginRight="@dimen/portrait_orientation_margin"
         android:background="@android:color/transparent"
         android:clickable="false"
         android:focusable="false"
