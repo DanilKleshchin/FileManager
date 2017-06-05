@@ -64,6 +64,9 @@ class ListAdapter extends BaseAdapter {
         viewHolder_.fileImage.setImageDrawable(directory
                 ? (ContextCompat.getDrawable(context_, R.mipmap.folder_image))
                 : (ContextCompat.getDrawable(context_, R.mipmap.file_image)));
+        viewHolder_.fileImage.setContentDescription(directory
+                ? (context_.getString(R.string.directory_desc))
+                : (context_.getString(R.string.file_desc)));
         return view;
     }
 

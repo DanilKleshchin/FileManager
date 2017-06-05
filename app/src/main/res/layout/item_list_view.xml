@@ -17,7 +17,8 @@
             android:layout_height="@dimen/image_view_width_height"
             android:layout_marginLeft="@dimen/portrait_orientation_margin"
             android:layout_marginRight="@dimen/portrait_orientation_margin"
-            app:srcCompat="@mipmap/file_image"/>
+            app:srcCompat="@mipmap/file_image"
+            android:contentDescription="@string/image_desc" />
     </LinearLayout>
 
     <LinearLayout
