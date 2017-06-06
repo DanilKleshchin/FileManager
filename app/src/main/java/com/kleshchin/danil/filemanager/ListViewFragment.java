@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -30,7 +31,8 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 /**
  * Created by Danil Kleshchin on 19.05.2017.
  */
-public class ListViewFragment extends Fragment implements OnBackPressedListener {
+public class ListViewFragment extends Fragment implements OnBackPressedListener,
+        ListAdapter.OnGetViewListener {
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getPath();
     private static final String PATH_KEY = "path";
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
@@ -39,6 +41,8 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener 
     private ListView listView_;
     private ListAdapter listAdapter_;
     private View currentView_;
+    private ArrayList<String> sizeValueArray_ = new ArrayList<>();
+
 
     @NonNull
     public static ListViewFragment newInstance(@NonNull String path) {
@@ -123,6 +127,13 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener 
                 listener.onAddFragmentListener(fragment, file);
             }
         }
+        String [] list = currentFile_.list();
+        if(list != null) {
+            for (String aList : list) {
+                sizeValueArray_.add("Counting...");
+            }
+        }
+
     }
 
     @Override
@@ -159,14 +170,61 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener 
         popBackStackListener.onPopBackStackListener(0);
     }
 
+    @Override
+    public void onGetViewListener(File file, int i) {
+        SizeCounter counter = new SizeCounter();
+        counter.setI(i);
+        counter.execute(file);
+    }
+
     private void fillListView(@NonNull File file) {
-        listAdapter_ = new ListAdapter(file);
-        String path = file.getPath();
+        listAdapter_ = new ListAdapter(file, this, sizeValueArray_);
         listView_.setAdapter(listAdapter_);
+        String path = file.getPath();
         OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
         listener.onToolbarTextChangeListener((path.equals(MAIN_PATH))
                 ? getResources().getString(R.string.root_directory)
                 : path, file);
+    }
+
+    private class SizeCounter extends AsyncTask<File, Void, Double> {
+        private int i_ = 0;
+
+        void setI(int i) {
+            this.i_ = i;
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected Double doInBackground(File... params) {
+            return countSize(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Double aDouble) {
+            sizeValueArray_.set(i_, String.valueOf(aDouble / 1000000.0));
+            listAdapter_.notifyDataSetChanged();
+        }
+
+        private double countSize(File directory) {
+            long length = 0;
+            if (directory.isFile()) {
+                length += directory.length();
+            }
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File dir : files) {
+                    if (dir.isFile())
+                        length += dir.length();
+                    else
+                        length += countSize(dir);
+                }
+            }
+            return length;
+        }
     }
 
     private class ItemClickListener implements AdapterView.OnItemClickListener {

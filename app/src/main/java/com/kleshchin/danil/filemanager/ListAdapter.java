@@ -22,8 +22,12 @@ import java.util.Comparator;
 class ListAdapter extends BaseAdapter {
     @NonNull
     private ArrayList<File> file_;
+    private OnGetViewListener listener_;
+    private ArrayList<String> size_;
 
-    ListAdapter(File file) {
+    ListAdapter(File file, OnGetViewListener listener, ArrayList<String> size) {
+        listener_ = listener;
+        size_ = size;
         try {
             file_ = new ArrayList<>(Arrays.asList(file.listFiles()));
             Collections.sort(file_, new FileNameComparator());
@@ -49,33 +53,39 @@ class ListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        Context context = viewGroup.getContext();
-        ViewHolder viewHolder;
-        if (view == null) {
-            view = LayoutInflater.from(context).inflate(R.layout.item_list_view, viewGroup, false);
-            viewHolder = new ViewHolder(view);
-            view.setTag(viewHolder);
-        } else {
-            viewHolder = (ViewHolder) view.getTag();
-        }
         File file = getItem(i);
-        viewHolder.fileName.setText(file.getName());
+        Context context_ = viewGroup.getContext();
+
+        listener_.onGetViewListener(file, i);
+        ViewHolder viewHolder_;
+        if (view == null) {
+            view = LayoutInflater.from(context_).inflate(R.layout.item_list_view, viewGroup, false);
+            viewHolder_ = new ViewHolder(view);
+            view.setTag(viewHolder_);
+        } else {
+            viewHolder_ = (ViewHolder) view.getTag();
+        }
+        viewHolder_.fileName.setText(file.getName());
+        viewHolder_.fileSize.setText(size_.get(i) + " M/B");
         boolean directory = file.isDirectory();
-        viewHolder.fileImage.setImageDrawable(directory
-                ? (ContextCompat.getDrawable(context, R.mipmap.folder_image))
-                : (ContextCompat.getDrawable(context, R.mipmap.file_image)));
-        viewHolder.fileImage.setContentDescription(directory
-                ? (context.getString(R.string.directory_desc))
-                : (context.getString(R.string.file_desc)));
+        viewHolder_.fileImage.setImageDrawable(directory
+                ? (ContextCompat.getDrawable(context_, R.mipmap.folder_image))
+                : (ContextCompat.getDrawable(context_, R.mipmap.file_image)));
+        viewHolder_.fileImage.setContentDescription(directory
+                ? (context_.getString(R.string.directory_desc))
+                : (context_.getString(R.string.file_desc)));
         return view;
     }
 
     private final static class ViewHolder {
         TextView fileName;
+        TextView fileSize;
         ImageView fileImage;
-        ViewHolder(View view){
-            fileName = (TextView) view.findViewById(R.id.fileName);
-            fileImage = (ImageView) view.findViewById(R.id.fileImage);
+
+        ViewHolder(View view) {
+            fileName = (TextView) view.findViewById(R.id.file_name);
+            fileImage = (ImageView) view.findViewById(R.id.file_image);
+            fileSize = (TextView) view.findViewById(R.id.file_size);
         }
     }
 
@@ -90,5 +100,9 @@ class ListAdapter extends BaseAdapter {
                 return 1;
             }
         }
+    }
+
+    interface OnGetViewListener {
+        void onGetViewListener(File file, int i);
     }
 }
