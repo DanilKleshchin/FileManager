@@ -22,8 +22,12 @@ import java.util.Comparator;
 class ListAdapter extends BaseAdapter {
     @NonNull
     private ArrayList<File> file_;
+    private OnGetViewListener listener_;
+    private ArrayList<String> size_;
 
-    ListAdapter(File file) {
+    ListAdapter(File file, OnGetViewListener listener, ArrayList<String> size) {
+        listener_ = listener;
+        size_ = size;
         try {
             file_ = new ArrayList<>(Arrays.asList(file.listFiles()));
             Collections.sort(file_, new FileNameComparator());
@@ -51,6 +55,7 @@ class ListAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
         File file = getItem(i);
         Context context_ = viewGroup.getContext();
+        listener_.onGetViewListener(file, i);
         ViewHolder viewHolder_;
         if (view == null) {
             view = LayoutInflater.from(context_).inflate(R.layout.item_list_view, viewGroup, false);
@@ -60,6 +65,7 @@ class ListAdapter extends BaseAdapter {
             viewHolder_ = (ViewHolder) view.getTag();
         }
         viewHolder_.fileName.setText(file.getName());
+        viewHolder_.fileSize.setText(size_.get(i) + " M/B");
         boolean directory = file.isDirectory();
         viewHolder_.fileImage.setImageDrawable(directory
                 ? (ContextCompat.getDrawable(context_, R.mipmap.folder_image))
@@ -72,11 +78,13 @@ class ListAdapter extends BaseAdapter {
 
     private final static class ViewHolder {
         TextView fileName;
+        TextView fileSize;
         ImageView fileImage;
 
         ViewHolder(View view) {
             fileName = (TextView) view.findViewById(R.id.file_name);
             fileImage = (ImageView) view.findViewById(R.id.file_image);
+            fileSize = (TextView) view.findViewById(R.id.file_size);
         }
     }
 
@@ -91,5 +99,9 @@ class ListAdapter extends BaseAdapter {
                 return 1;
             }
         }
+    }
+
+    interface OnGetViewListener {
+        void onGetViewListener(File file, int i);
     }
 }
