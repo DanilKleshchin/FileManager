@@ -49,28 +49,32 @@ class ListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        Context context = viewGroup.getContext();
-        ViewHolder viewHolder;
-        if (view == null) {
-            view = LayoutInflater.from(context).inflate(R.layout.item_list_view, viewGroup, false);
-            viewHolder = new ViewHolder();
-            viewHolder.fileName = (TextView) view.findViewById(R.id.fileName);
-            viewHolder.fileImage = (ImageView) view.findViewById(R.id.fileImage);
-            view.setTag(viewHolder);
-        } else {
-            viewHolder = (ViewHolder) view.getTag();
-        }
         File file = getItem(i);
-        viewHolder.fileName.setText(file.getName());
-        viewHolder.fileImage.setImageDrawable((file.isDirectory())
-                ? (ContextCompat.getDrawable(context, R.drawable.folder))
-                : (ContextCompat.getDrawable(context, R.drawable.file)));
+        Context context_ = viewGroup.getContext();
+        ViewHolder viewHolder_;
+        if (view == null) {
+            view = LayoutInflater.from(context_).inflate(R.layout.item_list_view, viewGroup, false);
+            viewHolder_ = new ViewHolder(view);
+            view.setTag(viewHolder_);
+        } else {
+            viewHolder_ = (ViewHolder) view.getTag();
+        }
+        viewHolder_.fileName.setText(file.getName());
+        boolean directory = file.isDirectory();
+        viewHolder_.fileImage.setImageDrawable(directory
+                ? (ContextCompat.getDrawable(context_, R.mipmap.folder_image))
+                : (ContextCompat.getDrawable(context_, R.mipmap.file_image)));
         return view;
     }
 
     private final static class ViewHolder {
         TextView fileName;
         ImageView fileImage;
+
+        ViewHolder(View view) {
+            fileName = (TextView) view.findViewById(R.id.file_name);
+            fileImage = (ImageView) view.findViewById(R.id.file_image);
+        }
     }
 
     private class FileNameComparator implements Comparator<File> {
