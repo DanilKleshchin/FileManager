@@ -137,10 +137,7 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
         FragmentManager manager = getSupportFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
         manager.popBackStack();
-
-        transaction.replace((getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT
-                ? R.id.place_holder
-                : R.id.fragment_holder), fragment)
+        transaction.replace(R.id.view_for_replace, fragment)
                 .addToBackStack(MAIN_PATH)
                 .commit();
     }
