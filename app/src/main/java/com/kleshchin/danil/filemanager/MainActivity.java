@@ -104,7 +104,8 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
         manager_.popBackStack(file.getParent(), 0);
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             manager_.beginTransaction()
-                    .replace(R.id.view_for_replace, fragment)
+                    .replace(R.id.view_for_replace
+                            , fragment)
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
                     .addToBackStack(path)
                     .commit();
