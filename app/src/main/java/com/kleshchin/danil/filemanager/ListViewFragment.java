@@ -127,8 +127,8 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
                 listener.onAddFragmentListener(fragment, file);
             }
         }
-        String [] list = currentFile_.list();
-        if(list != null) {
+        String[] list = currentFile_.list();
+        if (list != null) {
             for (String aList : list) {
                 sizeValueArray_.add("Counting...");
             }
@@ -187,11 +187,19 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
                 : path, file);
     }
 
-    private class SizeCounter extends AsyncTask<File, Void, Double> {
-        private int i_ = 0;
+    private void updateView(int i){
+        View view = listView_.getChildAt(i - listView_.getFirstVisiblePosition());
+        if(view != null) {
+            OnUpdateListViewListener listener = listAdapter_;
+            listener.onUpdateListViewListener(view, i);
+        }
+    }
 
-        void setI(int i) {
-            this.i_ = i;
+    private class SizeCounter extends AsyncTask<File, Void, Double> {
+        private int position_ = 0;
+
+        void setI(int position) {
+            this.position_ = position;
         }
 
         @Override
@@ -205,8 +213,8 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
 
         @Override
         protected void onPostExecute(Double aDouble) {
-            sizeValueArray_.set(i_, String.valueOf(aDouble / 1000000.0));
-            listAdapter_.notifyDataSetChanged();
+            sizeValueArray_.set(position_, String.valueOf(aDouble / 1000000.0));
+            updateView(position_);
         }
 
         private double countSize(File directory) {
@@ -265,4 +273,8 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     interface OnSaveCurrentFile {
         void onSaveCurrentFile(String path);
     }
+}
+
+interface OnUpdateListViewListener {
+    void onUpdateListViewListener(View v, int i);
 }

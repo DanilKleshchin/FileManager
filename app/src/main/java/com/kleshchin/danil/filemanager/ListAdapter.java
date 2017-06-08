@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
@@ -19,11 +20,12 @@ import java.util.Comparator;
 /**
  * Created by Danil Kleshchin on 11.05.2017.
  */
-class ListAdapter extends BaseAdapter {
+class ListAdapter extends BaseAdapter implements OnUpdateListViewListener {
     @NonNull
     private ArrayList<File> file_;
     private OnGetViewListener listener_;
     private ArrayList<String> size_;
+    private ViewHolder viewHolder_;
 
     ListAdapter(File file, OnGetViewListener listener, ArrayList<String> size) {
         listener_ = listener;
@@ -56,7 +58,7 @@ class ListAdapter extends BaseAdapter {
         File file = getItem(i);
         Context context_ = viewGroup.getContext();
         listener_.onGetViewListener(file, i);
-        ViewHolder viewHolder_;
+
         if (view == null) {
             view = LayoutInflater.from(context_).inflate(R.layout.item_list_view, viewGroup, false);
             viewHolder_ = new ViewHolder(view);
@@ -76,15 +78,22 @@ class ListAdapter extends BaseAdapter {
         return view;
     }
 
+    @Override
+    public void onUpdateListViewListener(View v, int i) {
+        viewHolder_.fileSize.setText(size_.get(i) + " M/B");
+    }
+
     private final static class ViewHolder {
         TextView fileName;
         TextView fileSize;
         ImageView fileImage;
+        ProgressBar progressBar;
 
         ViewHolder(View view) {
             fileName = (TextView) view.findViewById(R.id.file_name);
             fileImage = (ImageView) view.findViewById(R.id.file_image);
             fileSize = (TextView) view.findViewById(R.id.file_size);
+//            progressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
         }
     }
 
