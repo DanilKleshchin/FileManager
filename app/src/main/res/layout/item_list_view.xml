@@ -31,12 +31,19 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginRight="@dimen/portrait_orientation_margin"
+            android:layout_weight="1"
             android:textColor="@android:color/black"
             android:textSize="@dimen/text_view_text_size" />
         <TextView
             android:id="@+id/file_size"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            style="@android:style/Widget.ProgressBar.Small"/>
     </LinearLayout>
 
 </LinearLayout>
