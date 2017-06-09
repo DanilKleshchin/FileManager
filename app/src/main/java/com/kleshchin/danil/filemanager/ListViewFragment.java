@@ -2,6 +2,7 @@ package com.kleshchin.danil.filemanager;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -12,6 +13,7 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -54,18 +56,37 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
         return fragment;
     }
 
-    private static void callActivityForFile(@NonNull String path, @NonNull Context context)
+    private static void callActivityForFile(@NonNull String path, @NonNull final Context context)
             throws ActivityNotFoundException {
-        Uri uri = Uri.fromFile(new File(path));
-        Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-        String mime = "*/*";
-        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-        String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
-        if (mimeTypeMap.hasExtension(fileExtension)) {
-            mime = mimeTypeMap.getMimeTypeFromExtension(fileExtension);
+        final Uri uri = Uri.fromFile(new File(path));
+        final Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+        final MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+        final String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+        if (!mimeTypeMap.hasExtension(fileExtension)) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setTitle(R.string.attention)
+                    .setMessage(R.string.open_all_activities)
+                    .setIcon(android.R.drawable.ic_menu_info_details)
+                    .setCancelable(false)
+                    .setPositiveButton(R.string.yes_button, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            intent.setDataAndType(uri, "*/*").addFlags(FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(intent);
+                        }
+                    })
+                    .setNegativeButton(R.string.no_button, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    });
+            builder.create().show();
+        } else {
+            intent.setDataAndType(uri, mimeTypeMap.getMimeTypeFromExtension(fileExtension))
+                    .addFlags(FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
         }
-        intent.setDataAndType(uri, mime).addFlags(FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
     }
 
     @Nullable
@@ -91,7 +112,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     public void onStop() {
         super.onStop();
         OnSaveCurrentFile listener = (OnSaveCurrentFile) currentActivity_;
-        listener.onSaveCurrentFile(currentFile_.getPath());
+        listener.onSaveCurrent(currentFile_.getPath());
     }
 
     @Override
@@ -117,7 +138,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
             }
             arr.add(new File(MAIN_PATH));
             OnPopBackStackListener popBackStackListener = (OnPopBackStackListener) currentActivity_;
-            popBackStackListener.onPopBackStackListener(1);
+            popBackStackListener.onPopBackStack(1);
             Collections.reverse(arr);
             for (File file : arr) {
                 ListViewFragment fragment = new ListViewFragment();
@@ -125,7 +146,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
                 args.putString(PATH_KEY, file.getPath());
                 fragment.setArguments(args);
                 OnAddFragmentListener listener = (OnAddFragmentListener) currentActivity_;
-                listener.onAddFragmentListener(fragment, file);
+                listener.onAddFragment(fragment, file);
             }
         }
         String[] list = currentFile_.list();
@@ -138,7 +159,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 backPressedState();
@@ -158,21 +179,21 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
         String parent = currentFile_.getParent();
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             if (parent.equals(MAIN_PATH)) {
-                listener.onToolbarTextChangeListener(getResources().getString(R.string.root_directory),
+                listener.onToolbarTextChange(getResources().getString(R.string.root_directory),
                         currentFile_.getParentFile());
             } else {
-                listener.onToolbarTextChangeListener(parent, currentFile_.getParentFile());
+                listener.onToolbarTextChange(parent, currentFile_.getParentFile());
             }
         }
         if (!currentFile_.getPath().equals(MAIN_PATH)) {
             currentFile_ = new File(parent);
         }
         OnPopBackStackListener popBackStackListener = (OnPopBackStackListener) currentActivity_;
-        popBackStackListener.onPopBackStackListener(0);
+        popBackStackListener.onPopBackStack(0);
     }
 
     @Override
-    public void onGetViewListener(File file, int i) {
+    public void onGetView(@NonNull File file, int i) {
         SizeCounter counter = new SizeCounter();
         counter.setPosition(i);
         counter.execute(file);
@@ -183,7 +204,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
         listView_.setAdapter(listAdapter_);
         String path = file.getPath();
         OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
-        listener.onToolbarTextChangeListener((path.equals(MAIN_PATH))
+        listener.onToolbarTextChange((path.equals(MAIN_PATH))
                 ? getResources().getString(R.string.root_directory)
                 : path, file);
     }
@@ -192,8 +213,19 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
         View view = listView_.getChildAt(i - listView_.getFirstVisiblePosition());
         if (view != null) {
             OnUpdateListViewListener listener = listAdapter_;
-            listener.onUpdateListViewListener(view, i);
+            listener.onUpdateListView(view, i);
         }
+    }
+
+    private String countCorrectValue(@NonNull Double value, int index) {
+        String units[] = {"B", "KB", "MB", "GB"};                                                   //TODO - make array of strings in string.xml
+        double boundaryValue = 1024.0;
+        if (value > boundaryValue) {
+            if (index <= units.length) {
+                return countCorrectValue(value / boundaryValue, ++index);
+            }
+        }
+        return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
     }
 
     private class SizeCounter extends AsyncTask<File, Void, Double> {
@@ -242,7 +274,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
             File file = listAdapter_.getItem(i);
             if (file.isDirectory()) {
                 OnListItemClickListener listener = (OnListItemClickListener) currentActivity_;
-                listener.onListItemClickListener(file);
+                listener.onListItemClick(file);
                 currentFile_ = file;
             } else {
                 try {
@@ -255,38 +287,27 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
         }
     }
 
-    private String countCorrectValue(Double value, int index) {
-        String units[] = {"B", "KB", "MB", "GB"};                                                   //TODO - make array of strings in string.xml
-        double boundaryValue = 1024.0;
-        if (value > boundaryValue) {
-            if (index <= units.length) {
-                return countCorrectValue(value / boundaryValue, ++index);
-            }
-        }
-        return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
-    }
-
     interface OnToolbarTextChangeListener {
-        void onToolbarTextChangeListener(String toolbarText, File file);
+        void onToolbarTextChange(String toolbarText, File file);
     }
 
     interface OnListItemClickListener {
-        void onListItemClickListener(File file);
+        void onListItemClick(File file);
     }
 
     interface OnAddFragmentListener {
-        void onAddFragmentListener(ListViewFragment fragment, File file);
+        void onAddFragment(ListViewFragment fragment, File file);
     }
 
     interface OnPopBackStackListener {
-        void onPopBackStackListener(int state);
+        void onPopBackStack(int state);
     }
 
     interface OnSaveCurrentFile {
-        void onSaveCurrentFile(String path);
+        void onSaveCurrent(String path);
     }
 }
 
 interface OnUpdateListViewListener {
-    void onUpdateListViewListener(View view, int i);
+    void onUpdateListView(View view, int i);
 }

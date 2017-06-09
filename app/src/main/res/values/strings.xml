@@ -3,9 +3,14 @@
     <string name="root_directory">Root Directory</string>
     <string name="activity_not_found">There is no application registered to handle the type
     of file selected</string>
+    <string name="open_all_activities">There is no application registered to handle the type
+    of file selected. Do you want to open list of all applications?</string>
     <string name="this_directory_is_empty">This directory is empty</string>
     <string name="failed_to_get_the_action_bar">"Failed to get the action bar"</string>
     <string name="image_desc">File picture</string>
     <string name="file_desc">File</string>
     <string name="directory_desc">Directory</string>
+    <string name="attention">Attention!</string>
+    <string name="yes_button">Yes</string>
+    <string name="no_button">No</string>
 </resources>
