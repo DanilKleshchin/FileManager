@@ -22,21 +22,44 @@
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_gravity="center">
-        <TextView
+        <EditText
             android:id="@+id/file_name"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginRight="@dimen/land_orientation_margin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/portrait_orientation_margin"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:clickable="false"
+            android:focusable="false"
+            android:inputType="textNoSuggestions"
+            android:singleLine="true"
             android:textColor="@android:color/black"
             android:textSize="@dimen/text_view_text_size" />
-        <TextView
-            android:id="@+id/file_size"
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="wrap_content"
+            android:layout_weight="0.2"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/file_size"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"/>
+
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                style="@android:style/Widget.ProgressBar.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="invisible"/>
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </LinearLayout>

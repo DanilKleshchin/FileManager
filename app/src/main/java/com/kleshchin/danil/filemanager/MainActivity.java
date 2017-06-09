@@ -62,19 +62,19 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     }
 
     @Override
-    public void onToolbarTextChangeListener(@NonNull String toolbarText, @NonNull File file) {
+    public void onToolbarTextChange(@NonNull String toolbarText, @NonNull File file) {
         toolbarTitle_.setText(toolbarText);
         toolbarTitle_.setSelection(toolbarTitle_.getText().length());
         initToolbar(file);
     }
 
     @Override
-    public void onAddFragmentListener(@NonNull ListViewFragment fragment, @NonNull File file) {
+    public void onAddFragment(@NonNull ListViewFragment fragment, @NonNull File file) {
         addFragment(fragment, file);
     }
 
     @Override
-    public void onPopBackStackListener(int state) {
+    public void onPopBackStack(int state) {
         switch (state) {
             case 0:
                 manager_.popBackStack();
@@ -86,13 +86,13 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     }
 
     @Override
-    public void onListItemClickListener(@NonNull File file) {
+    public void onListItemClick(@NonNull File file) {
         ListViewFragment fragment = ListViewFragment.newInstance(file.getPath());
         addFragment(fragment, file);
     }
 
     @Override
-    public void onSaveCurrentFile(@NonNull String path) {
+    public void onSaveCurrent(@NonNull String path) {
         SharedPreferences preferences = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(LAST_FILE_PATH, path);

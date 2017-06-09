@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -24,12 +25,12 @@ class ListAdapter extends BaseAdapter implements OnUpdateListViewListener {
     @NonNull
     private ArrayList<File> file_;
     private OnGetViewListener listener_;
-    private ArrayList<String> size_;
+    private ArrayList<String> sizeValueArray_;
     private ViewHolder viewHolder_;
 
     ListAdapter(File file, OnGetViewListener listener, ArrayList<String> size) {
         listener_ = listener;
-        size_ = size;
+        sizeValueArray_ = size;
         try {
             file_ = new ArrayList<>(Arrays.asList(file.listFiles()));
             Collections.sort(file_, new FileNameComparator());
@@ -57,8 +58,6 @@ class ListAdapter extends BaseAdapter implements OnUpdateListViewListener {
     public View getView(int i, View view, ViewGroup viewGroup) {
         File file = getItem(i);
         Context context_ = viewGroup.getContext();
-        listener_.onGetViewListener(file, i);
-
         if (view == null) {
             view = LayoutInflater.from(context_).inflate(R.layout.item_list_view, viewGroup, false);
             viewHolder_ = new ViewHolder(view);
@@ -67,7 +66,8 @@ class ListAdapter extends BaseAdapter implements OnUpdateListViewListener {
             viewHolder_ = (ViewHolder) view.getTag();
         }
         viewHolder_.fileName.setText(file.getName());
-        viewHolder_.fileSize.setText(size_.get(i) + " M/B");
+        viewHolder_.fileSize.setText(sizeValueArray_.get(i));
+        viewHolder_.progressBar.setVisibility(ProgressBar.VISIBLE);
         boolean directory = file.isDirectory();
         viewHolder_.fileImage.setImageDrawable(directory
                 ? (ContextCompat.getDrawable(context_, R.mipmap.folder_image))
@@ -75,12 +75,16 @@ class ListAdapter extends BaseAdapter implements OnUpdateListViewListener {
         viewHolder_.fileImage.setContentDescription(directory
                 ? (context_.getString(R.string.directory_desc))
                 : (context_.getString(R.string.file_desc)));
+        listener_.onGetView(file, i);
         return view;
     }
 
     @Override
-    public void onUpdateListViewListener(View v, int i) {
-        viewHolder_.fileSize.setText(size_.get(i) + " M/B");
+    public void onUpdateListView(View view, int i) {
+        ((TextView) view.findViewById(R.id.file_size)).setText(sizeValueArray_.get(i));
+        viewHolder_.fileSize.setText(sizeValueArray_.get(i));
+        viewHolder_.progressBar.setVisibility(ProgressBar.INVISIBLE);
+        view.findViewById(R.id.progress_bar).setVisibility(ProgressBar.INVISIBLE);
     }
 
     private final static class ViewHolder {
@@ -90,10 +94,10 @@ class ListAdapter extends BaseAdapter implements OnUpdateListViewListener {
         ProgressBar progressBar;
 
         ViewHolder(View view) {
-            fileName = (TextView) view.findViewById(R.id.file_name);
+            fileName = (EditText) view.findViewById(R.id.file_name);
             fileImage = (ImageView) view.findViewById(R.id.file_image);
             fileSize = (TextView) view.findViewById(R.id.file_size);
-//            progressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
+            progressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
         }
     }
 
@@ -111,6 +115,6 @@ class ListAdapter extends BaseAdapter implements OnUpdateListViewListener {
     }
 
     interface OnGetViewListener {
-        void onGetViewListener(File file, int i);
+        void onGetView(File file, int i);
     }
 }
