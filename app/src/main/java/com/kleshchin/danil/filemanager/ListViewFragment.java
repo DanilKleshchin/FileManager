@@ -25,6 +25,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Locale;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -129,7 +130,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
         }
         String[] list = currentFile_.list();
         if (list != null) {
-            for (String aList : list) {
+            for (String ignored : list) {
                 sizeValueArray_.add("Counting...");
             }
         }
@@ -173,7 +174,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     @Override
     public void onGetViewListener(File file, int i) {
         SizeCounter counter = new SizeCounter();
-        counter.setI(i);
+        counter.setPosition(i);
         counter.execute(file);
     }
 
@@ -187,9 +188,9 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
                 : path, file);
     }
 
-    private void updateView(int i){
+    private void updateView(int i) {
         View view = listView_.getChildAt(i - listView_.getFirstVisiblePosition());
-        if(view != null) {
+        if (view != null) {
             OnUpdateListViewListener listener = listAdapter_;
             listener.onUpdateListViewListener(view, i);
         }
@@ -198,7 +199,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     private class SizeCounter extends AsyncTask<File, Void, Double> {
         private int position_ = 0;
 
-        void setI(int position) {
+        void setPosition(int position) {
             this.position_ = position;
         }
 
@@ -213,7 +214,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
 
         @Override
         protected void onPostExecute(Double aDouble) {
-            sizeValueArray_.set(position_, String.valueOf(aDouble / 1000000.0));
+            sizeValueArray_.set(position_, countCorrectValue(aDouble, 0));
             updateView(position_);
         }
 
@@ -254,6 +255,17 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
         }
     }
 
+    private String countCorrectValue(Double value, int index) {
+        String units[] = {"B", "KB", "MB", "GB"};                                                   //TODO - make array of strings in string.xml
+        double boundaryValue = 1024.0;
+        if (value > boundaryValue) {
+            if (index <= units.length) {
+                return countCorrectValue(value / boundaryValue, ++index);
+            }
+        }
+        return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
+    }
+
     interface OnToolbarTextChangeListener {
         void onToolbarTextChangeListener(String toolbarText, File file);
     }
@@ -276,5 +288,5 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
 }
 
 interface OnUpdateListViewListener {
-    void onUpdateListViewListener(View v, int i);
+    void onUpdateListViewListener(View view, int i);
 }
