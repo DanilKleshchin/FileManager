@@ -218,7 +218,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     }
 
     private String countCorrectValue(@NonNull Double value, int index) {
-        String units[] = {"B", "KB", "MB", "GB"};                                                   //TODO - make array of strings in string.xml
+        String units[] = getResources().getStringArray(R.array.units);
         double boundaryValue = 1024.0;
         if (value > boundaryValue) {
             if (index <= units.length) {
