@@ -1,5 +1,6 @@
 package com.kleshchin.danil.filemanager;
 
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -43,8 +44,8 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     private AppCompatActivity currentActivity_;
     private ListView listView_;
     private ListAdapter listAdapter_;
-    private View currentView_;
     private ArrayList<String> sizeValueArray_ = new ArrayList<>();
+    @Nullable private static ProgressDialog dialog_;
 
 
     @NonNull
@@ -71,6 +72,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
                     .setPositiveButton(R.string.yes_button, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
+                            dialog_ = new ProgressDialog(context);
                             intent.setDataAndType(uri, "*/*").addFlags(FLAG_ACTIVITY_NEW_TASK);
                             context.startActivity(intent);
                         }
@@ -93,7 +95,6 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_list, container, false);
-        currentView_ = view;
         currentActivity_ = (AppCompatActivity) getActivity();
         setHasOptionsMenu(true);
         listView_ = (ListView) view.findViewById(R.id.listView);
@@ -106,6 +107,25 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString(PATH_KEY, currentFile_.getPath());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(dialog_ != null) {
+            dialog_.setTitle(getString(R.string.loading_title));
+            dialog_.setCancelable(false);
+            dialog_.show();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(dialog_ != null) {
+            dialog_.dismiss();
+            dialog_ = null;
+        }
     }
 
     @Override
@@ -278,9 +298,9 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
                 currentFile_ = file;
             } else {
                 try {
-                    callActivityForFile(file.getPath(), currentView_.getContext());
+                    callActivityForFile(file.getPath(), currentActivity_);
                 } catch (ActivityNotFoundException e) {
-                    Toast.makeText(currentView_.getContext(), R.string.activity_not_found,
+                    Toast.makeText(currentActivity_, R.string.activity_not_found,
                             Toast.LENGTH_LONG).show();
                 }
             }
