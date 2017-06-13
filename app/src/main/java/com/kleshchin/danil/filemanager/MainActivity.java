@@ -19,7 +19,7 @@ import java.io.File;
 public class MainActivity extends AppCompatActivity implements ListViewFragment.OnToolbarTextChangeListener,
         ListViewFragment.OnListItemClickListener, ListViewFragment.OnAddFragmentListener,
         ListViewFragment.OnPopBackStackListener, ListViewFragment.OnSaveCurrentFile {
-    private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getPath();
+    private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getParent();
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
     public static ActionBar actionBar_;
     private EditText toolbarTitle_;

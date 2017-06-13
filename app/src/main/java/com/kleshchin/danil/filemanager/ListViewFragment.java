@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -28,7 +27,6 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Locale;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -36,8 +34,8 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
  * Created by Danil Kleshchin on 19.05.2017.
  */
 public class ListViewFragment extends Fragment implements OnBackPressedListener,
-        ListAdapter.OnGetViewListener {
-    private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getPath();
+        OnCountFileSizeListener, ListAdapter.OnGetViewListener {
+    private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getParent();
     private static final String PATH_KEY = "path";
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
     private static File currentFile_ = new File(MAIN_PATH);
@@ -45,7 +43,9 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     private ListView listView_;
     private ListAdapter listAdapter_;
     private ArrayList<String> sizeValueArray_ = new ArrayList<>();
-    @Nullable private static ProgressDialog dialog_;
+    @Nullable
+    private static ProgressDialog dialog_ = null;
+    private static SizeManager manager_;
 
 
     @NonNull
@@ -63,43 +63,45 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
         final Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
         final MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
         final String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
-        if (!mimeTypeMap.hasExtension(fileExtension)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            builder.setTitle(R.string.attention)
-                    .setMessage(R.string.open_all_activities)
-                    .setIcon(android.R.drawable.ic_menu_info_details)
-                    .setCancelable(false)
-                    .setPositiveButton(R.string.yes_button, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog_ = new ProgressDialog(context);
-                            intent.setDataAndType(uri, "*/*").addFlags(FLAG_ACTIVITY_NEW_TASK);
-                            context.startActivity(intent);
-                        }
-                    })
-                    .setNegativeButton(R.string.no_button, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
+        try {
+            if (!mimeTypeMap.hasExtension(fileExtension)) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle(R.string.attention)
+                        .setMessage(R.string.open_all_activities)
+                        .setIcon(android.R.drawable.ic_menu_info_details)
+                        .setCancelable(false)
+                        .setPositiveButton(R.string.yes_button, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog_ = new ProgressDialog(context);
+                                intent.setDataAndType(uri, "*/*").addFlags(FLAG_ACTIVITY_NEW_TASK);
+                                context.startActivity(intent);
+                            }
+                        })
+                        .setNegativeButton(R.string.no_button, null);
+                builder.create().show();
+            } else {
+                intent.setDataAndType(uri, mimeTypeMap.getMimeTypeFromExtension(fileExtension))
+                        .addFlags(FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }
+        } catch (Exception ignored) {
 
-                        }
-                    });
-            builder.create().show();
-        } else {
-            intent.setDataAndType(uri, mimeTypeMap.getMimeTypeFromExtension(fileExtension))
-                    .addFlags(FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
         }
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+        manager_ = SizeManager.getInstance();
+        manager_.setListener(this);
         View view = inflater.inflate(R.layout.fragment_list, container, false);
         currentActivity_ = (AppCompatActivity) getActivity();
         setHasOptionsMenu(true);
         listView_ = (ListView) view.findViewById(R.id.listView);
         listView_.setEmptyView(view.findViewById(R.id.list_view_empty_state));
         listView_.setOnItemClickListener(new ItemClickListener());
+        dialog_ = null;
         return view;
     }
 
@@ -112,7 +114,7 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     @Override
     public void onPause() {
         super.onPause();
-        if(dialog_ != null) {
+        if (dialog_ != null && !currentActivity_.isFinishing()) {
             dialog_.setTitle(getString(R.string.loading_title));
             dialog_.setCancelable(false);
             dialog_.show();
@@ -122,7 +124,16 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     @Override
     public void onResume() {
         super.onResume();
-        if(dialog_ != null) {
+        if (dialog_ != null) {
+            dialog_.dismiss();
+            dialog_ = null;
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (dialog_ != null) {
             dialog_.dismiss();
             dialog_ = null;
         }
@@ -169,13 +180,10 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
                 listener.onAddFragment(fragment, file);
             }
         }
-        String[] list = currentFile_.list();
-        if (list != null) {
-            for (String ignored : list) {
-                sizeValueArray_.add("Counting...");
-            }
+        int count = currentFile_.list().length;
+        for (int i = 0; i < count; i++) {
+            sizeValueArray_.add("Counting...");
         }
-
     }
 
     @Override
@@ -213,10 +221,14 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     }
 
     @Override
-    public void onGetView(@NonNull File file, int i) {
-        SizeCounter counter = new SizeCounter();
-        counter.setPosition(i);
-        counter.execute(file);
+    public void onCountFileSize(int position, String sizeValue) {
+        sizeValueArray_.set(position, sizeValue);
+        updateView(position);
+    }
+
+    @Override
+    public void onGetView(File file, int i) {
+        manager_.setSize(file.getPath(), i);
     }
 
     private void fillListView(@NonNull File file) {
@@ -229,63 +241,10 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
                 : path, file);
     }
 
-    private void updateView(int i) {
-        View view = listView_.getChildAt(i - listView_.getFirstVisiblePosition());
-        if (view != null) {
-            OnUpdateListViewListener listener = listAdapter_;
-            listener.onUpdateListView(view, i);
-        }
-    }
-
-    private String countCorrectValue(@NonNull Double value, int index) {
-        String units[] = getResources().getStringArray(R.array.units);
-        double boundaryValue = 1024.0;
-        if (value > boundaryValue) {
-            if (index <= units.length) {
-                return countCorrectValue(value / boundaryValue, ++index);
-            }
-        }
-        return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
-    }
-
-    private class SizeCounter extends AsyncTask<File, Void, Double> {
-        private int position_ = 0;
-
-        void setPosition(int position) {
-            this.position_ = position;
-        }
-
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected Double doInBackground(File... params) {
-            return countSize(params[0]);
-        }
-
-        @Override
-        protected void onPostExecute(Double aDouble) {
-            sizeValueArray_.set(position_, countCorrectValue(aDouble, 0));
-            updateView(position_);
-        }
-
-        private double countSize(File directory) {
-            long length = 0;
-            if (directory.isFile()) {
-                length += directory.length();
-            }
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File dir : files) {
-                    if (dir.isFile())
-                        length += dir.length();
-                    else
-                        length += countSize(dir);
-                }
-            }
-            return length;
-        }
+    private void updateView(int position) {
+        View view = listView_.getChildAt(position - listView_.getFirstVisiblePosition());
+        OnUpdateListViewListener listener = listAdapter_;
+        listener.onUpdateListView(view, position);
     }
 
     private class ItemClickListener implements AdapterView.OnItemClickListener {
@@ -329,5 +288,5 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
 }
 
 interface OnUpdateListViewListener {
-    void onUpdateListView(View view, int i);
+    void onUpdateListView(View view, int position);
 }

@@ -21,7 +21,7 @@ import java.util.Comparator;
 /**
  * Created by Danil Kleshchin on 11.05.2017.
  */
-class ListAdapter extends BaseAdapter implements OnUpdateListViewListener {
+class ListAdapter extends BaseAdapter implements OnUpdateListViewListener{
     @NonNull
     private ArrayList<File> file_;
     private OnGetViewListener listener_;
@@ -81,10 +81,12 @@ class ListAdapter extends BaseAdapter implements OnUpdateListViewListener {
 
     @Override
     public void onUpdateListView(View view, int i) {
-        ((TextView) view.findViewById(R.id.file_size)).setText(sizeValueArray_.get(i));
-        viewHolder_.fileSize.setText(sizeValueArray_.get(i));
+        if (view != null) {
+            ((TextView) view.findViewById(R.id.file_size)).setText(sizeValueArray_.get(i));
+            view.findViewById(R.id.progress_bar).setVisibility(ProgressBar.INVISIBLE);
+        }
         viewHolder_.progressBar.setVisibility(ProgressBar.INVISIBLE);
-        view.findViewById(R.id.progress_bar).setVisibility(ProgressBar.INVISIBLE);
+        viewHolder_.fileSize.setText(sizeValueArray_.get(i));
     }
 
     private final static class ViewHolder {
