@@ -13,11 +13,5 @@
     <string name="attention">Attention!</string>
     <string name="yes_button">Yes</string>
     <string name="no_button">No</string>
-    <string name="loading_title">Loading...</string>
-    <array name="units">
-        <item name="byte">B</item>
-        <item name="kilo_byte">kB</item>
-        <item name="mega_byte">MB</item>
-        <item name="gigabyte">GB</item>
-    </array>
+    <string name="loading_title">Loading…</string>
 </resources>
