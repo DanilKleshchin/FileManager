@@ -3,6 +3,7 @@ package com.kleshchin.danil.filemanager;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.util.ArrayMap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,25 +18,28 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Danil Kleshchin on 11.05.2017.
  */
-class ListAdapter extends BaseAdapter implements OnUpdateListViewListener{
-    @NonNull
-    private ArrayList<File> file_;
-    private OnGetViewListener listener_;
-    private ArrayList<String> sizeValueArray_;
-    private ViewHolder viewHolder_;
+class ListAdapter extends BaseAdapter {
+    private Map<File, String> file_ = new LinkedHashMap<>();
+    //    private List<File> files_ = new ArrayList<>();
+    private static final String placeHolderForCounting = "Counting...";
 
-    ListAdapter(File file, OnGetViewListener listener, ArrayList<String> size) {
-        listener_ = listener;
-        sizeValueArray_ = size;
-        try {
-            file_ = new ArrayList<>(Arrays.asList(file.listFiles()));
-            Collections.sort(file_, new FileNameComparator());
-        } catch (NullPointerException e) {
-            file_ = new ArrayList<>();
+    ListAdapter(File file) {
+        if(file_.isEmpty()) {
+            try {
+                List<File> files_ = new ArrayList<>(Arrays.asList(file.listFiles()));
+                Collections.sort(files_, new FileNameComparator());
+                for (int i = 0; i < files_.size(); i++) {
+                    file_.put(files_.get(i), placeHolderForCounting);
+                }
+            } catch (NullPointerException ignored) {
+            }
         }
     }
 
@@ -45,8 +49,9 @@ class ListAdapter extends BaseAdapter implements OnUpdateListViewListener{
     }
 
     @Override
+    @NonNull
     public File getItem(int i) {
-        return file_.get(i);
+        return file_.;
     }
 
     @Override
@@ -57,36 +62,45 @@ class ListAdapter extends BaseAdapter implements OnUpdateListViewListener{
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         File file = getItem(i);
+        String size = file_.get(file);
         Context context_ = viewGroup.getContext();
+        ViewHolder viewHolder;
         if (view == null) {
             view = LayoutInflater.from(context_).inflate(R.layout.item_list_view, viewGroup, false);
-            viewHolder_ = new ViewHolder(view);
-            view.setTag(viewHolder_);
+            viewHolder = new ViewHolder(view);
+            view.setTag(viewHolder);
         } else {
-            viewHolder_ = (ViewHolder) view.getTag();
+            viewHolder = (ViewHolder) view.getTag();
         }
-        viewHolder_.fileName.setText(file.getName());
-        viewHolder_.fileSize.setText(sizeValueArray_.get(i));
-        viewHolder_.progressBar.setVisibility(ProgressBar.VISIBLE);
+        viewHolder.fileName.setText(file.getName());
+
+        if (size.equals(placeHolderForCounting)) {
+            viewHolder.progressBar.setVisibility(ProgressBar.VISIBLE);
+        } else {
+            viewHolder.progressBar.setVisibility(ProgressBar.INVISIBLE);
+        }
+        viewHolder.fileSize.setText(size);
         boolean directory = file.isDirectory();
-        viewHolder_.fileImage.setImageDrawable(directory
+        viewHolder.fileImage.setImageDrawable(directory
                 ? (ContextCompat.getDrawable(context_, R.mipmap.folder_image))
                 : (ContextCompat.getDrawable(context_, R.mipmap.file_image)));
-        viewHolder_.fileImage.setContentDescription(directory
+        viewHolder.fileImage.setContentDescription(directory
                 ? (context_.getString(R.string.directory_desc))
                 : (context_.getString(R.string.file_desc)));
-        listener_.onGetView(file, i);
         return view;
     }
 
-    @Override
-    public void onUpdateListView(View view, int i) {
-        if (view != null) {
-            ((TextView) view.findViewById(R.id.file_size)).setText(sizeValueArray_.get(i));
-            view.findViewById(R.id.progress_bar).setVisibility(ProgressBar.INVISIBLE);
-        }
-        viewHolder_.progressBar.setVisibility(ProgressBar.INVISIBLE);
-        viewHolder_.fileSize.setText(sizeValueArray_.get(i));
+    /*@Override
+    public void onUpdateListView(File file, String size) {
+        file_.put(file, size);
+        this.notifyDataSetChanged();
+        *//*((TextView) view.findViewById(R.id.file_size)).setText(sizeValueArray_.get(i).second);
+        view.findViewById(R.id.progress_bar).setVisibility(ProgressBar.INVISIBLE);*//*
+    }*/
+
+    void setFileSize(File file, String size) {
+        file_.put(file, size);
+        this.notifyDataSetChanged();
     }
 
     private final static class ViewHolder {
@@ -114,9 +128,5 @@ class ListAdapter extends BaseAdapter implements OnUpdateListViewListener{
                 return 1;
             }
         }
-    }
-
-    interface OnGetViewListener {
-        void onGetView(File file, int i);
     }
 }

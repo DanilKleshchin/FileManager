@@ -5,27 +5,16 @@ import android.support.annotation.NonNull;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.Map;
 
 /**
  * Created by Danil Kleshchin on 13.06.2017.
  */
-class SizeManager implements ListAdapter.OnGetViewListener {
-    private static HashMap<String, String> files_ = new HashMap<>();
-    private SizeCounter counter;
+class SizeManager {
+    private static Map<File, Long> files_ = new HashMap<>();
     private OnCountFileSizeListener listener_;
+
     private SizeManager() {
-    }
-
-    @Override
-    public void onGetView(File file, int i) {
-        counter = new SizeCounter();
-        counter.setPosition(i);
-        counter.execute(file);
-    }
-
-    void setListener(ListViewFragment fragment) {
-        this.listener_ = fragment;
     }
 
     private static class SizeManagerHolder {
@@ -33,49 +22,40 @@ class SizeManager implements ListAdapter.OnGetViewListener {
         private final static SizeManager instance = new SizeManager();
     }
 
+    void setListener(ListViewFragment listener) {
+        this.listener_ = listener;
+    }
+
     @NonNull
     static SizeManager getInstance() {
         return SizeManagerHolder.instance;
     }
 
-    void setSize(String file, int position) {
+    void countSize(File file) {
         if (files_.containsKey(file)) {
-            listener_.onCountFileSize(position, files_.get(file));
+            listener_.onCountFileSize(file, files_.get(file));
         }else {
-            counter = new SizeCounter();
-            counter.setPosition(position);
-            counter.execute(new File(file));
+            SizeCounter counter = new SizeCounter();
+            counter.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, file);
         }
     }
 
-    private class SizeCounter extends AsyncTask<File, Void, Double> {
-        private int position_ = 0;
+    private class SizeCounter extends AsyncTask<File, Void, Long> {
         private File file_;
 
-        void setPosition(int position) {
-            this.position_ = position;
-        }
-
         @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected Double doInBackground(File... params) {
+        protected Long doInBackground(File... params) {
             file_ = params[0];
             return countSize(params[0]);
         }
 
         @Override
-        protected void onPostExecute(Double aDouble) {
-            if (!isCancelled()) {
-                String value = countCorrectValue(aDouble, 0);
-                files_.put(file_.getPath(), value);
-                listener_.onCountFileSize(position_, value);
-            }
+        protected void onPostExecute(Long aLong) {
+            files_.put(file_, aLong);
+            listener_.onCountFileSize(file_, aLong);
         }
 
-        private double countSize(File directory) {
+        private Long countSize(File directory) {
             long length = 0;
             if (directory.isFile()) {
                 length += directory.length();
@@ -92,19 +72,8 @@ class SizeManager implements ListAdapter.OnGetViewListener {
             return length;
         }
     }
-
-    private String countCorrectValue(@NonNull Double value, int index) {
-        String units[] = {"B", "kB", "MB", "GB"};
-        double boundaryValue = 1024.0;
-        if (value > boundaryValue) {
-            if (index <= units.length) {
-                return countCorrectValue(value / boundaryValue, ++index);
-            }
-        }
-        return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
-    }
 }
 
 interface OnCountFileSizeListener {
-    void onCountFileSize(int position, String sizeValue);
+    void onCountFileSize(File file, Long sizeValue);
 }
