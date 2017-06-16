@@ -29,8 +29,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -42,10 +44,12 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getParent();
     private static final String PATH_KEY = "path";
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
+    private static final String placeHolderForCounting = "Counting...";
     private static File currentFile_ = new File(MAIN_PATH);
     private AppCompatActivity currentActivity_;
     private ListView listView_;
     private ListAdapter listAdapter_;
+    private Map<File, String> fileSize_ = new HashMap<>();              //TODO будет забиваться если открывать много папок
     @Nullable
     private static ProgressDialog dialog_ = null;
 
@@ -153,8 +157,8 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
         if (arguments != null) {
             String path = arguments.getString(PATH_KEY);
             if (path != null) {
-                currentFile_ = new File(path);
-                fillListView(currentFile_);
+                fillListView(new File(path));
+                countSize(new File(path));
             }
         } else {
             SharedPreferences preferences = currentActivity_.getPreferences(Context.MODE_PRIVATE);
@@ -201,11 +205,14 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     }
 
     @Override
-    public void onCountFileSize(File file, Long sizeValue) {
-        String value = countCorrectValue(Double.valueOf(sizeValue), 0);
-        listAdapter_.setFileSize(file, value);
-        /*OnUpdateListViewListener listener = listAdapter_;
-        listener.onUpdateListView(file, value);*/
+    public void onCountFileSize(final File file, Long sizeValue) {
+        final String value = countCorrectValue(Double.valueOf(sizeValue), 0);
+        fileSize_.put(file, value);
+        try {
+            updateView(listAdapter_.getPositionByFile(file), value);
+        } catch (NullPointerException ignored) {
+
+        }
     }
 
     private String countCorrectValue(@NonNull Double value, int index) {
@@ -220,34 +227,32 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     }
 
     private void countSize(File file) {
-        try {
+        if (file.list() != null) {
             List<File> files = new ArrayList<>(Arrays.asList(file.listFiles()));
             Collections.sort(files, new FileNameComparator());
             for (File f : files) {
                 SizeManager.getInstance().countSize(f);
             }
-        } catch (NullPointerException ignored) {
         }
     }
 
-    /*private void updateView() {
-        int first = listView_.getFirstVisiblePosition();
-        int last = listView_.getLastVisiblePosition();
-        for (int i = first; i <= last; i++) {
-            View view = listView_.getChildAt(i);
-            if (view != null) {
-                String name = file.getName();
-                CharSequence text = ((TextView) view.findViewById(R.id.file_name)).getText();
-                if (text.toString().equals(name)) {
-                    OnUpdateListViewListener listener = listAdapter_;
-                    listener.onUpdateListView(view, first + i);
+    private void updateView(int position, String size) {
+        View view = listView_.getChildAt(position - listView_.getFirstVisiblePosition());
+        if(view != null) {
+            listAdapter_.setFileSize(view, size);
+        }
+    }
+
+    private void fillListView(@NonNull File file) {
+        if (fileSize_.isEmpty()) {
+            File list[] = file.listFiles();
+            if (list != null) {
+                for (File aList : list) {
+                    fileSize_.put(aList, placeHolderForCounting);
                 }
             }
         }
-    }*/
-
-    private void fillListView(@NonNull File file) {
-        listAdapter_ = new ListAdapter(file);
+        listAdapter_ = new ListAdapter(file, fileSize_);
         listView_.setAdapter(listAdapter_);
         String path = file.getPath();
         OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
@@ -326,8 +331,4 @@ public class ListViewFragment extends Fragment implements OnBackPressedListener,
     interface OnSaveCurrentFile {
         void onSaveCurrent(String path);
     }
-}
-
-interface OnUpdateListViewListener {
-    void onUpdateListView(File file, String size);
 }
