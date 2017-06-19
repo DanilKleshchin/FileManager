@@ -6,7 +6,7 @@ android {
     defaultConfig {
         applicationId "com.kleshchin.danil.filemanager"
         minSdkVersion 16
-        targetSdkVersion 25
+        targetSdkVersion 16
         versionCode 1
         versionName "1.0"
     }

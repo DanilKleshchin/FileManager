@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="linear_layout_height">56dp</dimen>
+    <dimen name="image_view_width_height">40dp</dimen>
+    <dimen name="portrait_orientation_margin">16dp</dimen>
+    <dimen name="text_view_text_size">20sp</dimen>
+    <dimen name="toolbar_text_size">18sp</dimen>
+    <dimen name="list_item_height">72dp</dimen>
+</resources>

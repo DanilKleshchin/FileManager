@@ -1,137 +1,169 @@
 package com.kleshchin.danil.filemanager;
 
-import android.content.ActivityNotFoundException;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.MenuItem;
-import android.view.View;
-import android.webkit.MimeTypeMap;
-import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.HorizontalScrollView;
+
 import java.io.File;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
-public class MainActivity extends AppCompatActivity {
-
-    //    private static final String MAIN_PATH = "/storage";
+public class MainActivity extends AppCompatActivity implements ListViewFragment.OnToolbarTextChangeListener,
+        ListViewFragment.OnListItemClickListener, ListViewFragment.OnAddFragmentListener,
+        ListViewFragment.OnPopBackStackListener, ListViewFragment.OnSaveCurrentFile {
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getPath();
-    private static final String LIST_VIEW_STATE = "listview.state";
-
-    private ListView listView_;
-    private ListAdapter listAdapter_;
+    private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
+    public static ActionBar actionBar_;
     private EditText toolbarTitle_;
-    private File currentShowingPath_;
-
-    private static void onFileSelected(String path, @NonNull Context context)
-            throws ActivityNotFoundException {
-        Uri uri = Uri.fromFile(new File(path));
-        Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-        String mime = "*/*";
-        MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-        String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
-        if (mimeTypeMap.hasExtension(fileExtension)) {
-            mime = mimeTypeMap.getMimeTypeFromExtension(fileExtension);
-        }
-        intent.setDataAndType(uri, mime).addFlags(FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
-    }
+    private FragmentManager manager_;
+    private HorizontalScrollView scrollView_;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        listView_ = (ListView) findViewById(R.id.listView);
-        toolbarTitle_ = (EditText) findViewById(R.id.toolbar_title);
-        initToolbar(new File(MAIN_PATH));
-        fillListView(new File(MAIN_PATH));
-        listView_.setOnItemClickListener(new ItemClickListener());
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                fillListView(currentShowingPath_.getParentFile());
-                break;
-        }
-        return true;
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelable(LIST_VIEW_STATE, listView_.onSaveInstanceState());
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        Parcelable listViewState = savedInstanceState.getParcelable(LIST_VIEW_STATE);
-        listView_.onRestoreInstanceState(listViewState);
-    }
-
-    private void initToolbar(File file) {
+        ListViewFragment listFragment = new ListViewFragment();
+        replaceFragment(listFragment);
         setSupportActionBar((Toolbar) findViewById(R.id.main_toolbar));
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayShowTitleEnabled(false);
-            final Drawable upArrow = ContextCompat.getDrawable(this,
-                    R.drawable.ic_arrow_back_black_36dp);
-            upArrow.setColorFilter(ContextCompat.getColor(this, R.color.colorWhite),
-                    PorterDuff.Mode.SRC_ATOP);
-            String pathToFile = file.getPath();
-            if (!pathToFile.equals(MAIN_PATH)) {
-                actionBar.setHomeAsUpIndicator(upArrow);
-                actionBar.setDisplayHomeAsUpEnabled(true);
-                actionBar.setDisplayShowHomeEnabled(true);
-            } else {
-                actionBar.setHomeButtonEnabled(false);
-                actionBar.setDisplayHomeAsUpEnabled(false);
-                actionBar.setDisplayShowHomeEnabled(false);
+        actionBar_ = getSupportActionBar();
+        toolbarTitle_ = (EditText) findViewById(R.id.toolbar_title);
+        manager_ = getSupportFragmentManager();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        manager_.addOnBackStackChangedListener(new BackStackListener());
+    }
+
+    @Override
+    public void onBackPressed() {
+        FragmentManager fm = getSupportFragmentManager();
+        OnBackPressedListener backPressedListener = null;
+        for (Fragment fragment : fm.getFragments()) {
+            if (fragment instanceof OnBackPressedListener) {
+                backPressedListener = (OnBackPressedListener) fragment;
+                break;
             }
         }
+        if (backPressedListener != null) {
+            backPressedListener.onBackPressed();
+        } else {
+            super.onBackPressed();
+        }
     }
 
-    private void fillListView(File file) {
-        listAdapter_ = new ListAdapter(this, file);
-        currentShowingPath_ = file;
-        if (file.getPath().equals(MAIN_PATH)) {
-            toolbarTitle_.setText(R.string.root_directory);
-        } else {
-            toolbarTitle_.setText(file.getPath());
-        }
+    @Override
+    public void onToolbarTextChangeListener(@NonNull String toolbarText, @NonNull File file) {
+        toolbarTitle_.setText(toolbarText);
         toolbarTitle_.setSelection(toolbarTitle_.getText().length());
         initToolbar(file);
-        listView_.setAdapter(listAdapter_);
     }
 
-    private class ItemClickListener implements AdapterView.OnItemClickListener {
+    @Override
+    public void onAddFragmentListener(@NonNull ListViewFragment fragment, @NonNull File file) {
+        addFragment(fragment, file);
+    }
+
+    @Override
+    public void onPopBackStackListener(int state) {
+        switch (state) {
+            case 0:
+                manager_.popBackStack();
+                break;
+            case 1:
+                manager_.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                break;
+        }
+    }
+
+    @Override
+    public void onListItemClickListener(@NonNull File file) {
+        ListViewFragment fragment = ListViewFragment.newInstance(file.getPath());
+        addFragment(fragment, file);
+    }
+
+    @Override
+    public void onSaveCurrentFile(@NonNull String path) {
+        SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(LAST_FILE_PATH, path);
+        editor.apply();
+    }
+
+    private void addFragment(@NonNull Fragment fragment, @NonNull File file) {
+        String path = file.getPath();
+        manager_.popBackStack(file.getParent(), 0);
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            manager_.beginTransaction()
+                    .replace(R.id.place_holder, fragment)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                    .addToBackStack(path)
+                    .commit();
+        } else {
+            manager_.beginTransaction()
+                    .add(R.id.fragment_holder, fragment, path)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                    .addToBackStack(path)
+                    .commit();
+        }
+    }
+
+    private void initToolbar(@NonNull File file) {
+        if (actionBar_ == null) {
+            return;
+        }
+        actionBar_.setDisplayShowTitleEnabled(false);
+        actionBar_.setDisplayShowHomeEnabled(true);
+        if (!file.getPath().equals(MAIN_PATH)) {
+            actionBar_.setDisplayHomeAsUpEnabled(true);
+            actionBar_.setLogo(null);
+        } else {
+            actionBar_.setLogo(R.drawable.drawable_toolbar_logo);
+            actionBar_.setHomeButtonEnabled(false);
+            actionBar_.setDisplayHomeAsUpEnabled(false);
+        }
+    }
+
+    private void replaceFragment(@NonNull Fragment fragment) {
+        FragmentManager manager = getSupportFragmentManager();
+        FragmentTransaction transaction = manager.beginTransaction();
+        manager.popBackStack();
+        transaction.replace(R.id.view_for_replace, fragment)
+                .addToBackStack(MAIN_PATH)
+                .commit();
+    }
+
+    private class HorizontalScrollViewListener implements Runnable {
         @Override
-        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-            String path = listAdapter_.getItem(i).getPath();
-            if (new File(path).isDirectory()) {
-                fillListView(new File(path));
+        public void run() {
+            scrollView_.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
+        }
+    }
+
+    private class BackStackListener implements FragmentManager.OnBackStackChangedListener {
+        @Override
+        public void onBackStackChanged() {
+            if (manager_.getBackStackEntryCount() == 0) {
+                finish();
             } else {
-                try {
-                    onFileSelected(path, MainActivity.this);
-                } catch (ActivityNotFoundException e) {
-                    Toast.makeText(MainActivity.this, R.string.activity_not_found,
-                            Toast.LENGTH_LONG).show();
+                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    scrollView_ = (HorizontalScrollView) findViewById(R.id.horizontal_scroll_view);
+                    scrollView_.postDelayed(new HorizontalScrollViewListener(), 100L);
                 }
             }
         }
     }
+}
+
+interface OnBackPressedListener {
+    void onBackPressed();
 }
