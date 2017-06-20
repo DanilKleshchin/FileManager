@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
         }
         FragmentTransaction transaction = manager.beginTransaction();
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-            transaction.replace(R.id.view_for_replace, fragment);
+            transaction.replace(R.id.view_for_replace, fragment, path);
         } else {
             transaction.add(R.id.view_for_replace, fragment, path);
         }

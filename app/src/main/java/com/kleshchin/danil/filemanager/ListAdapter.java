@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -26,10 +27,10 @@ import java.util.Map;
  */
 class ListAdapter extends BaseAdapter {
     private List<File> fileNameArr_ = new ArrayList<>();
-    private Map<File, String> fileSizeArr_ = new HashMap<>();
-    private static final String placeHolderForCounting = "Counting...";
+    private Map<File, Long> fileSizeArr_ = new HashMap<>();
+    private static final String PLACE_HOLDER_FOR_COUNTING = "Counting...";
 
-    ListAdapter(File file, Map<File, String> size) {
+    ListAdapter(File file, Map<File, Long> size) {
         if (file.list() != null) {
             fileNameArr_ = new ArrayList<>(Arrays.asList(file.listFiles()));
             Collections.sort(fileNameArr_, new FileNameComparator());
@@ -56,11 +57,10 @@ class ListAdapter extends BaseAdapter {
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         File file = getItem(i);
-        String size = fileSizeArr_.get(file);
-        if(size == null) {
-            fileSizeArr_.put(file, placeHolderForCounting);
-            size = placeHolderForCounting;
-        }
+        Long val = fileSizeArr_.get(file);
+        String size = val == null
+                ? PLACE_HOLDER_FOR_COUNTING
+                : countCorrectValue(Double.valueOf(fileSizeArr_.get(file)), 0);
         Context context = viewGroup.getContext();
         ViewHolder viewHolder;
         if (view == null) {
@@ -78,22 +78,25 @@ class ListAdapter extends BaseAdapter {
         return fileNameArr_.indexOf(file);
     }
 
-    void setFileSize(View view, String size) {
-        ((TextView) view.findViewById(R.id.file_size)).setText(size);
+    void setFileSize(View view, Long size) {
+        String value = countCorrectValue(Double.valueOf(size), 0);
+        ((TextView) view.findViewById(R.id.file_size)).setText(value);
         ViewHolder viewHolder = (ViewHolder) view.getTag();
-        viewHolder.fileSize.setText(size);
+        viewHolder.fileSize.setText(value);
         viewHolder.progressBar.setVisibility(View.INVISIBLE);
     }
 
     private static void fillViewHolder(Context context, @NonNull ViewHolder holder, File file, String size) {
         holder.fileName.setText(file.getName());
 
-        if (size.equals(placeHolderForCounting)) {
+        if (size == null) {
             holder.progressBar.setVisibility(ProgressBar.VISIBLE);
+            holder.fileSize.setText(PLACE_HOLDER_FOR_COUNTING);
         } else {
             holder.progressBar.setVisibility(ProgressBar.INVISIBLE);
+            holder.fileSize.setText(size);
         }
-        holder.fileSize.setText(size);
+
         boolean directory = file.isDirectory();
         holder.fileImage.setImageDrawable(directory
                 ? (ContextCompat.getDrawable(context, R.mipmap.folder_image))
@@ -101,6 +104,17 @@ class ListAdapter extends BaseAdapter {
         holder.fileImage.setContentDescription(directory
                 ? (context.getString(R.string.directory_desc))
                 : (context.getString(R.string.file_desc)));
+    }
+
+    private String countCorrectValue(@NonNull Double value, int index) {
+        String units[] = {"B", "kB", "MB", "GB"};
+        double boundaryValue = 1024.0;
+        if (value > boundaryValue) {
+            if (index <= units.length) {
+                return countCorrectValue(value / boundaryValue, ++index);
+            }
+        }
+        return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
     }
 
     private final static class ViewHolder {

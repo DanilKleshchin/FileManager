@@ -41,13 +41,12 @@ public class ListViewFragment extends Fragment implements
         OnCountFileSizeListener, OnMenuItemClickListener {
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getParent();
     private static final String PATH_KEY = "path";
-    private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
-    private static final String placeHolderForCounting = "Counting...";
+    //private static final String placeHolderForCounting = "Counting...";
     private static File currentFile_ = new File(MAIN_PATH);
     private AppCompatActivity currentActivity_;
     private ListView listView_;
     private ListAdapter listAdapter_;
-    private Map<File, String> fileSize_ = new HashMap<>();              //TODO будет забиваться если открывать много папок
+    private Map<File, Long> fileSize_ = new HashMap<>();              //TODO будет забиваться если открывать много папок
     @Nullable
     private static ProgressDialog dialog_ = null;
 
@@ -165,10 +164,10 @@ public class ListViewFragment extends Fragment implements
 
     @Override
     public void onCountFileSize(final File file, Long sizeValue) {
-        final String value = countCorrectValue(Double.valueOf(sizeValue), 0);
-        fileSize_.put(file, value);
+        //final String value = countCorrectValue(Double.valueOf(sizeValue), 0);
+        fileSize_.put(file, sizeValue);
         try {
-            updateView(listAdapter_.getPositionByFile(file), value);
+            updateView(listAdapter_.getPositionByFile(file), sizeValue);
         } catch (NullPointerException ignored) {
 
         }
@@ -190,17 +189,6 @@ public class ListViewFragment extends Fragment implements
         }
     }
 
-    private String countCorrectValue(@NonNull Double value, int index) {
-        String units[] = {"B", "kB", "MB", "GB"};
-        double boundaryValue = 1024.0;
-        if (value > boundaryValue) {
-            if (index <= units.length) {
-                return countCorrectValue(value / boundaryValue, ++index);
-            }
-        }
-        return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
-    }
-
     private void countSize(File file) {
         if (file.list() != null) {
             List<File> files = new ArrayList<>(Arrays.asList(file.listFiles()));
@@ -211,7 +199,7 @@ public class ListViewFragment extends Fragment implements
         }
     }
 
-    private void updateView(int position, String size) {
+    private void updateView(int position, Long size) {
         View view = listView_.getChildAt(position - listView_.getFirstVisiblePosition());
         if (view != null) {
             listAdapter_.setFileSize(view, size);
@@ -223,7 +211,7 @@ public class ListViewFragment extends Fragment implements
             File list[] = file.listFiles();
             if (list != null) {
                 for (File aList : list) {
-                    fileSize_.put(aList, placeHolderForCounting);
+                    fileSize_.put(aList, null);
                 }
             }
         }
