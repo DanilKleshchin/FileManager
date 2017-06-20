@@ -28,7 +28,6 @@ import java.util.Map;
 class ListAdapter extends BaseAdapter {
     private List<File> fileNameArr_ = new ArrayList<>();
     private Map<File, Long> fileSizeArr_ = new HashMap<>();
-    private static final String PLACE_HOLDER_FOR_COUNTING = "Counting...";
 
     ListAdapter(File file, Map<File, Long> size) {
         if (file.list() != null) {
@@ -57,10 +56,7 @@ class ListAdapter extends BaseAdapter {
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         File file = getItem(i);
-        Long val = fileSizeArr_.get(file);
-        String size = val == null
-                ? PLACE_HOLDER_FOR_COUNTING
-                : countCorrectValue(Double.valueOf(fileSizeArr_.get(file)), 0);
+
         Context context = viewGroup.getContext();
         ViewHolder viewHolder;
         if (view == null) {
@@ -70,7 +66,9 @@ class ListAdapter extends BaseAdapter {
         } else {
             viewHolder = (ViewHolder) view.getTag();
         }
-        fillViewHolder(context, viewHolder, file, size);
+
+        fillViewHolder(context, viewHolder, file);
+
         return view;
     }
 
@@ -86,12 +84,17 @@ class ListAdapter extends BaseAdapter {
         viewHolder.progressBar.setVisibility(View.INVISIBLE);
     }
 
-    private static void fillViewHolder(Context context, @NonNull ViewHolder holder, File file, String size) {
+    private void fillViewHolder(Context context, @NonNull ViewHolder holder, File file) {
         holder.fileName.setText(file.getName());
+
+        Long val = fileSizeArr_.get(file);
+        String size = val == null
+                ? null
+                : countCorrectValue(val, 0);
 
         if (size == null) {
             holder.progressBar.setVisibility(ProgressBar.VISIBLE);
-            holder.fileSize.setText(PLACE_HOLDER_FOR_COUNTING);
+            holder.fileSize.setText(R.string.place_holder_for_counting);
         } else {
             holder.progressBar.setVisibility(ProgressBar.INVISIBLE);
             holder.fileSize.setText(size);
@@ -106,7 +109,7 @@ class ListAdapter extends BaseAdapter {
                 : (context.getString(R.string.file_desc)));
     }
 
-    private String countCorrectValue(@NonNull Double value, int index) {
+    private String countCorrectValue(double value, int index) {
         String units[] = {"B", "kB", "MB", "GB"};
         double boundaryValue = 1024.0;
         if (value > boundaryValue) {

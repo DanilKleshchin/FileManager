@@ -69,6 +69,10 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     public void onBackPressed() {
         FragmentManager manager = getSupportFragmentManager();
         manager.popBackStack();
+        String name = manager.getBackStackEntryAt(0).getName();
+        OnBackPressedListener listener = (OnBackPressedListener)
+                manager.findFragmentByTag(name);
+        listener.onBackPressed();
     }
 
     @Override
@@ -76,13 +80,10 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
         switch (item.getItemId()) {
             case android.R.id.home:
                 FragmentManager manager = getSupportFragmentManager();
-                OnMenuItemClickListener menuClickListener = null;
-                for (Fragment fragment : manager.getFragments()) {
-                    if (fragment instanceof OnMenuItemClickListener) {
-                        menuClickListener = (OnMenuItemClickListener) fragment;
-                        break;
-                    }
-                }
+                int index = manager.getBackStackEntryCount() - 1;
+                String name = manager.getBackStackEntryAt(index).getName();
+                OnMenuItemClickListener menuClickListener = (OnMenuItemClickListener)
+                        manager.findFragmentByTag(name);
                 if (menuClickListener != null) {
                     menuClickListener.onMenuItemClick(this);
                 } else {
@@ -96,10 +97,8 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     }
 
     @Override
-    public void onToolbarTextChange(@NonNull String toolbarText, @NonNull File file) {
-        toolbarTitle_.setText(toolbarText);
-        toolbarTitle_.setSelection(toolbarTitle_.getText().length());
-        initToolbar(file);
+    public void onToolbarTextChange(@NonNull String text, @NonNull File file) {
+        initToolbar(file, text);
     }
 
     @Override
@@ -135,7 +134,10 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
                 .commit();
     }
 
-    private void initToolbar(@NonNull File file) {
+    private void initToolbar(@NonNull File file, String text) {
+        String name = text.equals(MAIN_PATH) ? getResources().getString(R.string.root_directory) : text;
+        toolbarTitle_.setText(name);
+        toolbarTitle_.setSelection(toolbarTitle_.getText().length());
         if (actionBar_ == null) {
             return;
         }
@@ -175,4 +177,8 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
 
 interface OnMenuItemClickListener {
     void onMenuItemClick(Context context);
+}
+
+interface OnBackPressedListener {
+    void onBackPressed();
 }

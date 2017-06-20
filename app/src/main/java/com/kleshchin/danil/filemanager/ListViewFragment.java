@@ -5,7 +5,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -38,10 +37,9 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
  * Created by Danil Kleshchin on 19.05.2017.
  */
 public class ListViewFragment extends Fragment implements
-        OnCountFileSizeListener, OnMenuItemClickListener {
+        OnCountFileSizeListener, OnMenuItemClickListener, OnBackPressedListener {
     private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getParent();
     private static final String PATH_KEY = "path";
-    //private static final String placeHolderForCounting = "Counting...";
     private static File currentFile_ = new File(MAIN_PATH);
     private AppCompatActivity currentActivity_;
     private ListView listView_;
@@ -107,6 +105,20 @@ public class ListViewFragment extends Fragment implements
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            String path = arguments.getString(PATH_KEY);
+            if (path != null) {
+                fillListView(new File(path));
+                currentFile_ = new File(path);
+            }
+        }
+        countSize(currentFile_);
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString(PATH_KEY, currentFile_.getPath());
@@ -148,23 +160,7 @@ public class ListViewFragment extends Fragment implements
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Bundle arguments = getArguments();
-        if (arguments != null) {
-            String path = arguments.getString(PATH_KEY);
-            if (path != null) {
-                fillListView(new File(path));
-                countSize(new File(path));
-                currentFile_ = new File(path);
-            }
-        }
-        countSize(currentFile_);
-    }
-
-    @Override
     public void onCountFileSize(final File file, Long sizeValue) {
-        //final String value = countCorrectValue(Double.valueOf(sizeValue), 0);
         fileSize_.put(file, sizeValue);
         try {
             updateView(listAdapter_.getPositionByFile(file), sizeValue);
@@ -178,16 +174,29 @@ public class ListViewFragment extends Fragment implements
         OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) context;
         String parent = currentFile_.getParent();
         File parentFile = currentFile_.getParentFile();
-        if (parent.equals(MAIN_PATH)) {
-            listener.onToolbarTextChange(getResources().getString(R.string.root_directory),
-                    parentFile);
-        } else {
-            listener.onToolbarTextChange(parent, parentFile);
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            if (parent.equals(MAIN_PATH)) {
+                listener.onToolbarTextChange(getResources().getString(R.string.root_directory),
+                        parentFile);
+            } else {
+                listener.onToolbarTextChange(parent, parentFile);
+            }
         }
         if (!currentFile_.getPath().equals(MAIN_PATH)) {
             currentFile_ = parentFile;
         }
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            fillListView(currentFile_);
+        }
     }
+
+    @Override
+    public void onBackPressed() {
+        currentFile_ = currentFile_.getParentFile();
+        OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
+        listener.onToolbarTextChange(currentFile_.getPath(), currentFile_);
+    }
+
 
     private void countSize(File file) {
         if (file.list() != null) {
