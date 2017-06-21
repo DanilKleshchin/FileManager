@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -23,7 +22,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements ListViewFragment.OnToolbarTextChangeListener,
         ListViewFragment.OnListItemClickListener, ListViewFragment.OnSaveCurrentFile {
-    private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getParent();
+    private static final String MAIN_PATH = "/";
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
     public static ActionBar actionBar_;
     private EditText toolbarTitle_;
@@ -38,11 +37,11 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
         if (!lastPath.equals("")) {
             List<File> arr = new ArrayList<>();
             File temp = new File(lastPath);
-            String rootFile = new File(MAIN_PATH).getParent();
-            while (!temp.getPath().equals(rootFile)) {
+            while (!temp.getPath().equals(MAIN_PATH)) {
                 arr.add(temp);
                 temp = temp.getParentFile();
             }
+            arr.add(new File(MAIN_PATH));
             Collections.reverse(arr);
             FragmentManager manager = getSupportFragmentManager();
             manager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);

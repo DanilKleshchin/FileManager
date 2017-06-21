@@ -54,6 +54,7 @@ class ListAdapter extends BaseAdapter {
     }
 
     @Override
+    @NonNull
     public View getView(int i, View view, ViewGroup viewGroup) {
         File file = getItem(i);
 
@@ -76,8 +77,8 @@ class ListAdapter extends BaseAdapter {
         return fileNameArr_.indexOf(file);
     }
 
-    void setFileSize(View view, Long size) {
-        String value = countCorrectValue(Double.valueOf(size), 0);
+    void setFileSize(@NonNull Context context, View view, Long size) {
+        String value = countCorrectValue(context, Double.valueOf(size), 0);
         ((TextView) view.findViewById(R.id.file_size)).setText(value);
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         viewHolder.fileSize.setText(value);
@@ -90,7 +91,7 @@ class ListAdapter extends BaseAdapter {
         Long val = fileSizeArr_.get(file);
         String size = val == null
                 ? null
-                : countCorrectValue(val, 0);
+                : countCorrectValue(context, val, 0);
 
         if (size == null) {
             holder.progressBar.setVisibility(ProgressBar.VISIBLE);
@@ -109,12 +110,16 @@ class ListAdapter extends BaseAdapter {
                 : (context.getString(R.string.file_desc)));
     }
 
-    private String countCorrectValue(double value, int index) {
+    @NonNull
+    private String countCorrectValue(@NonNull Context context, double value, int index) {
+        if(value == -1) {
+            return context.getString(R.string.cannot_count);
+        }
         String units[] = {"B", "kB", "MB", "GB"};
         double boundaryValue = 1024.0;
         if (value > boundaryValue) {
             if (index <= units.length) {
-                return countCorrectValue(value / boundaryValue, ++index);
+                return countCorrectValue(context, value / boundaryValue, ++index);
             }
         }
         return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];

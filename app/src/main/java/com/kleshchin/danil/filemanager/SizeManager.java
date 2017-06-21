@@ -4,8 +4,14 @@ import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Created by Danil Kleshchin on 13.06.2017.
@@ -32,17 +38,29 @@ class SizeManager {
     }
 
     void countSize(File file) {
-        if (files_.containsKey(file)) {
-            listener_.onCountFileSize(file, files_.get(file));
-        }else {
-            SizeCounter counter = new SizeCounter();
-            counter.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, file);
+        if (file.list() != null) {
+            List<File> files = new ArrayList<>(Arrays.asList(file.listFiles()));
+            Collections.sort(files, new FileNameComparator());
+            for (File f : files) {
+                if (files_.containsKey(f)) {
+                    listener_.onCountFileSize(f, files_.get(f));
+                } else {
+                    try {
+                        SizeCounter counter = new SizeCounter();
+                        counter.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, f);
+                    } catch (RejectedExecutionException e) {
+                        listener_.onCountFileSize(f, (long) -1);
+                    }
+                }
+            }
         }
+
     }
 
     private class SizeCounter extends AsyncTask<File, Void, Long> {
         private File file_;
 
+        @NonNull
         @Override
         protected Long doInBackground(File... params) {
             file_ = params[0];
@@ -55,6 +73,7 @@ class SizeManager {
             listener_.onCountFileSize(file_, aLong);
         }
 
+        @NonNull
         private Long countSize(File directory) {
             long length = 0;
             if (directory.isFile()) {
@@ -70,6 +89,19 @@ class SizeManager {
                 }
             }
             return length;
+        }
+    }
+
+    private class FileNameComparator implements Comparator<File> {
+        @Override
+        public int compare(File lhs, File rhs) {
+            if (lhs.isDirectory() == rhs.isDirectory()) {
+                return lhs.getName().toLowerCase().compareTo(rhs.getName().toLowerCase());
+            } else if (lhs.isDirectory()) {
+                return -1;
+            } else {
+                return 1;
+            }
         }
     }
 }

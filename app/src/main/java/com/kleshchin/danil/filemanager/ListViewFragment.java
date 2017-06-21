@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -23,12 +22,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -38,13 +32,13 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
  */
 public class ListViewFragment extends Fragment implements
         OnCountFileSizeListener, OnMenuItemClickListener, OnBackPressedListener {
-    private static final String MAIN_PATH = Environment.getExternalStorageDirectory().getParent();
+    private static final String MAIN_PATH = "/";
     private static final String PATH_KEY = "path";
     private static File currentFile_ = new File(MAIN_PATH);
     private AppCompatActivity currentActivity_;
     private ListView listView_;
     private ListAdapter listAdapter_;
-    private Map<File, Long> fileSize_ = new HashMap<>();              //TODO будет забиваться если открывать много папок
+    private Map<File, Long> fileSize_ = new HashMap<>();
     @Nullable
     private static ProgressDialog dialog_ = null;
 
@@ -93,7 +87,6 @@ public class ListViewFragment extends Fragment implements
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        SizeManager.getInstance().setListener(this);
         View view = inflater.inflate(R.layout.fragment_list, container, false);
         currentActivity_ = (AppCompatActivity) getActivity();
         setHasOptionsMenu(true);
@@ -101,21 +94,19 @@ public class ListViewFragment extends Fragment implements
         listView_.setEmptyView(view.findViewById(R.id.list_view_empty_state));
         listView_.setOnItemClickListener(new ItemClickListener());
         dialog_ = null;
-        return view;
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
         Bundle arguments = getArguments();
         if (arguments != null) {
             String path = arguments.getString(PATH_KEY);
             if (path != null) {
-                fillListView(new File(path));
-                currentFile_ = new File(path);
+                File file = new File(path);
+                fillListView(file);
+                currentFile_ = file;
             }
         }
-        countSize(currentFile_);
+        SizeManager manager = SizeManager.getInstance();
+        manager.setListener(this);
+        manager.countSize(currentFile_);
+        return view;
     }
 
     @Override
@@ -165,7 +156,6 @@ public class ListViewFragment extends Fragment implements
         try {
             updateView(listAdapter_.getPositionByFile(file), sizeValue);
         } catch (NullPointerException ignored) {
-
         }
     }
 
@@ -197,21 +187,10 @@ public class ListViewFragment extends Fragment implements
         listener.onToolbarTextChange(currentFile_.getPath(), currentFile_);
     }
 
-
-    private void countSize(File file) {
-        if (file.list() != null) {
-            List<File> files = new ArrayList<>(Arrays.asList(file.listFiles()));
-            Collections.sort(files, new FileNameComparator());
-            for (File f : files) {
-                SizeManager.getInstance().countSize(f);
-            }
-        }
-    }
-
     private void updateView(int position, Long size) {
         View view = listView_.getChildAt(position - listView_.getFirstVisiblePosition());
         if (view != null) {
-            listAdapter_.setFileSize(view, size);
+            listAdapter_.setFileSize(currentActivity_, view, size);
         }
     }
 
@@ -248,19 +227,6 @@ public class ListViewFragment extends Fragment implements
                     Toast.makeText(currentActivity_, R.string.activity_not_found,
                             Toast.LENGTH_LONG).show();
                 }
-            }
-        }
-    }
-
-    private class FileNameComparator implements Comparator<File> {
-        @Override
-        public int compare(File lhs, File rhs) {
-            if (lhs.isDirectory() == rhs.isDirectory()) {
-                return lhs.getName().toLowerCase().compareTo(rhs.getName().toLowerCase());
-            } else if (lhs.isDirectory()) {
-                return -1;
-            } else {
-                return 1;
             }
         }
     }
