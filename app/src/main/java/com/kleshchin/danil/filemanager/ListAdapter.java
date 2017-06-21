@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * Created by Danil Kleshchin on 11.05.2017.
  */
-class ListAdapter extends BaseAdapter {
+class ListAdapter extends ListBaseAdapter implements android.widget.ListAdapter {
     private List<File> fileNameArr_ = new ArrayList<>();
     private Map<File, Long> fileSizeArr_ = new HashMap<>();
 
@@ -77,12 +77,10 @@ class ListAdapter extends BaseAdapter {
         return fileNameArr_.indexOf(file);
     }
 
-    void setFileSize(@NonNull Context context, View view, Long size) {
-        String value = countCorrectValue(context, Double.valueOf(size), 0);
-        ((TextView) view.findViewById(R.id.file_size)).setText(value);
+    void setFileSize(@NonNull Context context, View view, Long size, File file) {
+        fileSizeArr_.put(file, size);
         ViewHolder viewHolder = (ViewHolder) view.getTag();
-        viewHolder.fileSize.setText(value);
-        viewHolder.progressBar.setVisibility(View.INVISIBLE);
+        fillViewHolder(context, viewHolder, file);
     }
 
     private void fillViewHolder(Context context, @NonNull ViewHolder holder, File file) {
@@ -92,11 +90,13 @@ class ListAdapter extends BaseAdapter {
         String size = val == null
                 ? null
                 : countCorrectValue(context, val, 0);
-
         if (size == null) {
             holder.progressBar.setVisibility(ProgressBar.VISIBLE);
             holder.fileSize.setText(R.string.place_holder_for_counting);
         } else {
+            if (size.equals(context.getString(R.string.cannot_count))) {
+                //changeSizeValue(context, file, holder);
+            }
             holder.progressBar.setVisibility(ProgressBar.INVISIBLE);
             holder.fileSize.setText(size);
         }
@@ -112,7 +112,7 @@ class ListAdapter extends BaseAdapter {
 
     @NonNull
     private String countCorrectValue(@NonNull Context context, double value, int index) {
-        if(value == -1) {
+        if (value < 0) {
             return context.getString(R.string.cannot_count);
         }
         String units[] = {"B", "kB", "MB", "GB"};
@@ -123,6 +123,14 @@ class ListAdapter extends BaseAdapter {
             }
         }
         return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
+    }
+
+    private void changeSizeValue(@NonNull Context context, File file, ViewHolder holder) {
+        while (!file.getName().equals("/")) {
+            fileSizeArr_.put(file, (long) -1);
+            holder.fileSize.setText(context.getString(R.string.cannot_count));
+            file = file.getParentFile();
+        }
     }
 
     private final static class ViewHolder {

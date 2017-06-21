@@ -22,7 +22,11 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -38,9 +42,11 @@ public class ListViewFragment extends Fragment implements
     private AppCompatActivity currentActivity_;
     private ListView listView_;
     private ListAdapter listAdapter_;
-    private Map<File, Long> fileSize_ = new HashMap<>();
+    private List<File> fileNameArr_ = new ArrayList<>();
+    private Map<File, Long> fileSizeArr_ = new HashMap<>();
     @Nullable
     private static ProgressDialog dialog_ = null;
+    boolean flag = false;
 
     @NonNull
     public static ListViewFragment newInstance(@NonNull String path) {
@@ -103,9 +109,18 @@ public class ListViewFragment extends Fragment implements
                 currentFile_ = file;
             }
         }
-        SizeManager manager = SizeManager.getInstance();
-        manager.setListener(this);
-        manager.countSize(currentFile_);
+        File[] list = currentFile_.listFiles();
+        if (list != null) {
+            Collections.addAll(fileNameArr_, list);
+            Collections.sort(fileNameArr_, new FileNameComparator());
+        }
+        //if (listAdapter_ != null) {
+            SizeManager manager = SizeManager.getInstance();
+            manager.setListener(this);
+            manager.countSize(currentFile_);
+            //manager.countSize(new File("/cache"));
+        //    flag = true;
+        //}
         return view;
     }
 
@@ -152,9 +167,10 @@ public class ListViewFragment extends Fragment implements
 
     @Override
     public void onCountFileSize(final File file, Long sizeValue) {
-        fileSize_.put(file, sizeValue);
+        fileSizeArr_.put(file, sizeValue);
         try {
-            updateView(listAdapter_.getPositionByFile(file), sizeValue);
+            //updateView(listAdapter_.getPositionByFile(file), sizeValue, file);
+            updateView(fileNameArr_.indexOf(file), sizeValue, file);
         } catch (NullPointerException ignored) {
         }
     }
@@ -187,24 +203,36 @@ public class ListViewFragment extends Fragment implements
         listener.onToolbarTextChange(currentFile_.getPath(), currentFile_);
     }
 
-    private void updateView(int position, Long size) {
-        View view = listView_.getChildAt(position - listView_.getFirstVisiblePosition());
+    private void updateView(int position, Long size, File file) {
+        int index = position - listView_.getFirstVisiblePosition();
+        View view = listView_.getChildAt(index);
         if (view != null) {
-            listAdapter_.setFileSize(currentActivity_, view, size);
+            //listAdapter_.notifyItemChanged(index);
+            listAdapter_.setFileSize(currentActivity_, view, size, file);
         }
     }
 
     private void fillListView(@NonNull File file) {
-        if (fileSize_.isEmpty()) {
+        if (fileSizeArr_.isEmpty()) {
             File list[] = file.listFiles();
             if (list != null) {
                 for (File aList : list) {
-                    fileSize_.put(aList, null);
+                    fileSizeArr_.put(aList, null);
                 }
             }
         }
-        listAdapter_ = new ListAdapter(file, fileSize_);
+        listAdapter_ = new ListAdapter(file, fileSizeArr_);
         listView_.setAdapter(listAdapter_);
+        /*if(!flag) {
+            listView_.post(new Runnable() {
+                @Override
+                public void run() {
+                    SizeManager manager = SizeManager.getInstance();
+                    manager.setListener(ListViewFragment.this);
+                    manager.countSize(currentFile_);
+                }
+            });
+        }*/
         String path = file.getPath();
         OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
         listener.onToolbarTextChange((path.equals(MAIN_PATH))
@@ -227,6 +255,19 @@ public class ListViewFragment extends Fragment implements
                     Toast.makeText(currentActivity_, R.string.activity_not_found,
                             Toast.LENGTH_LONG).show();
                 }
+            }
+        }
+    }
+
+    private class FileNameComparator implements Comparator<File> {
+        @Override
+        public int compare(File lhs, File rhs) {
+            if (lhs.isDirectory() == rhs.isDirectory()) {
+                return lhs.getName().toLowerCase().compareTo(rhs.getName().toLowerCase());
+            } else if (lhs.isDirectory()) {
+                return -1;
+            } else {
+                return 1;
             }
         }
     }
