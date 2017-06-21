@@ -4,11 +4,13 @@ import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
@@ -64,7 +66,11 @@ class SizeManager {
         @Override
         protected Long doInBackground(File... params) {
             file_ = params[0];
-            return countSize(params[0]);
+            try {
+                return getDirSize(params[0]);
+            } catch (Exception e) {
+                return (long) -1;
+            }
         }
 
         @Override
@@ -73,22 +79,45 @@ class SizeManager {
             listener_.onCountFileSize(file_, aLong);
         }
 
-        @NonNull
-        private Long countSize(File directory) {
-            long length = 0;
-            if (directory.isFile()) {
-                length += directory.length();
+        private boolean isValidDir(File dir) {
+            return dir != null && dir.exists() && dir.isDirectory();
+        }
+
+        boolean isSymlink(File file) throws IOException {
+            File canon;
+            if (file.getParent() == null) {
+                canon = file;
+            } else {
+                canon = new File(file.getParentFile().getCanonicalFile(),
+                        file.getName());
             }
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File dir : files) {
-                    if (dir.isFile())
-                        length += dir.length();
-                    else
-                        length += countSize(dir);
+            return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
+        }
+
+        long getDirSize(File dir) throws IOException {
+            if (dir != null && dir.exists()) {
+                if (dir.isFile()) {
+                    return dir.length();
                 }
+            } else {
+                return 0L;
             }
-            return length;
+            File[] files = dir.listFiles();
+            if (files == null) {
+                return 0L;
+            } else {
+                long size = 0L;
+                for (File file : files) {
+                    if (file.isFile()) {
+                        size += file.length();
+                    } else {
+                            if (!isSymlink(file)) {
+                                size += getDirSize(file);
+                            }
+                    }
+                }
+                return size;
+            }
         }
     }
 
