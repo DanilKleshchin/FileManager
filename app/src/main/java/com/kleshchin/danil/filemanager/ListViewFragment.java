@@ -118,7 +118,6 @@ public class ListViewFragment extends Fragment implements
             SizeManager manager = SizeManager.getInstance();
             manager.setListener(this);
             manager.countSize(currentFile_);
-            //manager.countSize(new File("/cache"));
         //    flag = true;
         //}
         return view;
@@ -207,8 +206,8 @@ public class ListViewFragment extends Fragment implements
         int index = position - listView_.getFirstVisiblePosition();
         View view = listView_.getChildAt(index);
         if (view != null) {
-            //listAdapter_.notifyItemChanged(index);
-            listAdapter_.setFileSize(currentActivity_, view, size, file);
+            listAdapter_.notifyItemChanged(0);
+            //listAdapter_.setFileSize(currentActivity_, view, size, file);
         }
     }
 

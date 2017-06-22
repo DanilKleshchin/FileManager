@@ -25,7 +25,8 @@ import java.util.Map;
 /**
  * Created by Danil Kleshchin on 11.05.2017.
  */
-class ListAdapter extends ListBaseAdapter implements android.widget.ListAdapter {
+//class ListAdapter extends ListBaseAdapter implements android.widget.ListAdapter {
+class ListAdapter extends ListBaseAdapter {
     private List<File> fileNameArr_ = new ArrayList<>();
     private Map<File, Long> fileSizeArr_ = new HashMap<>();
 
@@ -73,9 +74,9 @@ class ListAdapter extends ListBaseAdapter implements android.widget.ListAdapter 
         return view;
     }
 
-    int getPositionByFile(File file) {
+    /*int getPositionByFile(File file) {
         return fileNameArr_.indexOf(file);
-    }
+    }*/
 
     void setFileSize(@NonNull Context context, View view, Long size, File file) {
         fileSizeArr_.put(file, size);
@@ -94,9 +95,6 @@ class ListAdapter extends ListBaseAdapter implements android.widget.ListAdapter 
             holder.progressBar.setVisibility(ProgressBar.VISIBLE);
             holder.fileSize.setText(R.string.place_holder_for_counting);
         } else {
-            if (size.equals(context.getString(R.string.cannot_count))) {
-                //changeSizeValue(context, file, holder);
-            }
             holder.progressBar.setVisibility(ProgressBar.INVISIBLE);
             holder.fileSize.setText(size);
         }
@@ -125,12 +123,32 @@ class ListAdapter extends ListBaseAdapter implements android.widget.ListAdapter 
         return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
     }
 
-    private void changeSizeValue(@NonNull Context context, File file, ViewHolder holder) {
-        while (!file.getName().equals("/")) {
-            fileSizeArr_.put(file, (long) -1);
-            holder.fileSize.setText(context.getString(R.string.cannot_count));
-            file = file.getParentFile();
-        }
+    public boolean areAllItemsEnabled() {
+        return true;
+    }
+
+    public boolean isEnabled(int position) {
+        return true;
+    }
+
+    public View getDropDownView(int position, View convertView, ViewGroup parent) {
+        return getView(position, convertView, parent);
+    }
+
+    public int getItemViewType(int position) {
+        return 0;
+    }
+
+    public int getViewTypeCount() {
+        return 1;
+    }
+
+    public boolean isEmpty() {
+        return getCount() == 0;
+    }
+
+    public boolean hasStableIds() {
+        return false;
     }
 
     private final static class ViewHolder {

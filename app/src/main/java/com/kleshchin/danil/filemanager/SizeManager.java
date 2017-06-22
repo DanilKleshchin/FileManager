@@ -79,10 +79,6 @@ class SizeManager {
             listener_.onCountFileSize(file_, aLong);
         }
 
-        private boolean isValidDir(File dir) {
-            return dir != null && dir.exists() && dir.isDirectory();
-        }
-
         boolean isSymlink(File file) throws IOException {
             File canon;
             if (file.getParent() == null) {
