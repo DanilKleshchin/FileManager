@@ -1,5 +1,8 @@
 package com.kleshchin.danil.filemanager;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 
@@ -10,7 +13,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
@@ -19,8 +21,11 @@ import java.util.concurrent.RejectedExecutionException;
  * Created by Danil Kleshchin on 13.06.2017.
  */
 class SizeManager {
+
     private static Map<File, Long> files_ = new HashMap<>();
     private OnCountFileSizeListener listener_;
+    private static DBHelper dbHelper_;
+    private static SQLiteDatabase database_;
 
     private SizeManager() {
     }
@@ -34,16 +39,30 @@ class SizeManager {
         this.listener_ = listener;
     }
 
+    void openDB(Context context) {
+        dbHelper_ = new DBHelper(context);
+    }
+
     @NonNull
     static SizeManager getInstance() {
         return SizeManagerHolder.instance;
     }
 
-    void countSize(File file) {
+    void getWritableDB(File file) {
+        DBGetter dbGetter = new DBGetter();
+        dbGetter.execute(file);
+    }
+
+    private void countSize(File file) {
         if (file.list() != null) {
             List<File> files = new ArrayList<>(Arrays.asList(file.listFiles()));
             Collections.sort(files, new FileNameComparator());
             for (File f : files) {
+                if (f.isFile()) {
+                    files_.put(f, f.length());
+                } else {
+                    checkDirectoryInDB(f);
+                }
                 if (files_.containsKey(f)) {
                     listener_.onCountFileSize(f, files_.get(f));
                 } else {
@@ -51,12 +70,29 @@ class SizeManager {
                         SizeCounter counter = new SizeCounter();
                         counter.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, f);
                     } catch (RejectedExecutionException e) {
-                        listener_.onCountFileSize(f, (long) -1);
+                        listener_.onCountFileSize(f, -1L);
                     }
                 }
             }
         }
+    }
 
+    private void checkDirectoryInDB(File file) {
+        database_ = dbHelper_.getWritableDatabase();
+        Cursor cursor = database_.query(DBHelper.TABLE_NAME, null, null, null, null, null, null);
+        if (cursor.moveToFirst()) {
+            int filePathIndex = cursor.getColumnIndex(DBHelper.KEY_FILE_PATH);
+            int fileDateIndex = cursor.getColumnIndex(DBHelper.KEY_FILE_MODIFIED_DATE);
+            int fileSizeIndex = cursor.getColumnIndex(DBHelper.KEY_FILE_SIZE);
+            do {
+                if (cursor.getString(filePathIndex).equals(file.getPath())) {
+                    if (file.lastModified() == cursor.getLong(fileDateIndex)) {
+                        files_.put(file, cursor.getLong(fileSizeIndex));
+                    }
+                }
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
     }
 
     private class SizeCounter extends AsyncTask<File, Void, Long> {
@@ -69,13 +105,16 @@ class SizeManager {
             try {
                 return getDirSize(params[0]);
             } catch (Exception e) {
-                return (long) -1;
+                return -1L;
             }
         }
 
         @Override
         protected void onPostExecute(Long aLong) {
             files_.put(file_, aLong);
+            if (file_.isDirectory()) {
+                dbHelper_.insertIntoDB(aLong, file_, database_);
+            }
             listener_.onCountFileSize(file_, aLong);
         }
 
@@ -90,30 +129,44 @@ class SizeManager {
             return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
         }
 
-        long getDirSize(File dir) throws IOException {
-            if (dir != null && dir.exists()) {
-                if (dir.isFile()) {
-                    return dir.length();
+        long getDirSize(File file) throws IOException {
+            if (file != null && file.exists()) {
+                if (file.isFile()) {
+                    return file.length();
                 }
             } else {
                 return 0L;
             }
-            File[] files = dir.listFiles();
+            File[] files = file.listFiles();
             if (files == null) {
                 return 0L;
             } else {
                 long size = 0L;
-                for (File file : files) {
-                    if (file.isFile()) {
-                        size += file.length();
+                for (File f : files) {
+                    if (f.isFile()) {
+                        size += f.length();
+                    } else if (!isSymlink(f)) {
+                        size += getDirSize(f);
                     } else {
-                            if (!isSymlink(file)) {
-                                size += getDirSize(file);
-                            }
+                        size += getDirSize(f.getAbsoluteFile());
                     }
                 }
                 return size;
             }
+        }
+    }
+
+    private class DBGetter extends AsyncTask<File, Void, File> {
+        @Override
+        protected File doInBackground(File... params) {
+            database_ = dbHelper_.getWritableDatabase();
+            return params[0];
+        }
+
+        @Override
+        protected void onPostExecute(File file) {
+            super.onPostExecute(file);
+            countSize(file);
         }
     }
 
@@ -128,6 +181,10 @@ class SizeManager {
                 return 1;
             }
         }
+    }
+
+    static void closeDB() {
+        dbHelper_.close();
     }
 }
 

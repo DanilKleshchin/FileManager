@@ -15,6 +15,8 @@ import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 
+import com.facebook.stetho.Stetho;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +24,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements ListViewFragment.OnToolbarTextChangeListener,
         ListViewFragment.OnListItemClickListener, ListViewFragment.OnSaveCurrentFile {
+
     private static final String MAIN_PATH = "/";
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
     public static ActionBar actionBar_;
@@ -32,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Stetho.initializeWithDefaults(this);
         SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
         String lastPath = preferences.getString(LAST_FILE_PATH, "");
         if (!lastPath.equals("")) {
@@ -50,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
                 addFragment(listViewFragment, file);
             }
         } else {
-            ListViewFragment listFragment = new ListViewFragment();
+            ListViewFragment listFragment = ListViewFragment.newInstance(null);
             addFragment(listFragment, new File(MAIN_PATH));
         }
         setSupportActionBar((Toolbar) findViewById(R.id.main_toolbar));
@@ -62,6 +66,12 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     public void onStart() {
         super.onStart();
         getSupportFragmentManager().addOnBackStackChangedListener(new BackStackListener());
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        SizeManager.closeDB();
     }
 
     @Override

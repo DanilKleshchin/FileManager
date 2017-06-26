@@ -46,10 +46,9 @@ public class ListViewFragment extends Fragment implements
     private Map<File, Long> fileSizeArr_ = new HashMap<>();
     @Nullable
     private static ProgressDialog dialog_ = null;
-    boolean flag = false;
 
     @NonNull
-    public static ListViewFragment newInstance(@NonNull String path) {
+    public static ListViewFragment newInstance(@Nullable String path) {
         ListViewFragment fragment = new ListViewFragment();
         Bundle args = new Bundle();
         args.putString(PATH_KEY, path);
@@ -107,6 +106,8 @@ public class ListViewFragment extends Fragment implements
                 File file = new File(path);
                 fillListView(file);
                 currentFile_ = file;
+            } else {
+                fillListView(currentFile_);
             }
         }
         File[] list = currentFile_.listFiles();
@@ -114,12 +115,10 @@ public class ListViewFragment extends Fragment implements
             Collections.addAll(fileNameArr_, list);
             Collections.sort(fileNameArr_, new FileNameComparator());
         }
-        //if (listAdapter_ != null) {
-            SizeManager manager = SizeManager.getInstance();
-            manager.setListener(this);
-            manager.countSize(currentFile_);
-        //    flag = true;
-        //}
+        SizeManager manager = SizeManager.getInstance();
+        manager.openDB(currentActivity_);
+        manager.setListener(this);
+        manager.getWritableDB(currentFile_);
         return view;
     }
 
@@ -169,7 +168,7 @@ public class ListViewFragment extends Fragment implements
         fileSizeArr_.put(file, sizeValue);
         try {
             //updateView(listAdapter_.getPositionByFile(file), sizeValue, file);
-            updateView(fileNameArr_.indexOf(file), sizeValue, file);
+            updateView(fileNameArr_.indexOf(file));
         } catch (NullPointerException ignored) {
         }
     }
@@ -202,7 +201,7 @@ public class ListViewFragment extends Fragment implements
         listener.onToolbarTextChange(currentFile_.getPath(), currentFile_);
     }
 
-    private void updateView(int position, Long size, File file) {
+    private void updateView(int position) {
         int index = position - listView_.getFirstVisiblePosition();
         View view = listView_.getChildAt(index);
         if (view != null) {
