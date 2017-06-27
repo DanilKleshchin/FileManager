@@ -2,15 +2,12 @@ package com.kleshchin.danil.filemanager;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,12 +22,11 @@ import java.util.Map;
 /**
  * Created by Danil Kleshchin on 11.05.2017.
  */
-//class ListAdapter extends ListBaseAdapter implements android.widget.ListAdapter {
-class ListAdapter extends ListBaseAdapter {
+class ListAdapter extends ListAdapterBase {
     private List<File> fileNameArr_ = new ArrayList<>();
     private Map<File, Long> fileSizeArr_ = new HashMap<>();
 
-    ListAdapter(File file, Map<File, Long> size) {
+    ListAdapter(@NonNull File file, Map<File, Long> size) {
         if (file.list() != null) {
             fileNameArr_ = new ArrayList<>(Arrays.asList(file.listFiles()));
             Collections.sort(fileNameArr_, new FileNameComparator());
@@ -56,9 +52,7 @@ class ListAdapter extends ListBaseAdapter {
 
     @Override
     @NonNull
-    public View getView(int i, View view, ViewGroup viewGroup) {
-        File file = getItem(i);
-
+    public View getView(int i, @Nullable View view, @NonNull ViewGroup viewGroup) {
         Context context = viewGroup.getContext();
         ViewHolder viewHolder;
         if (view == null) {
@@ -68,29 +62,24 @@ class ListAdapter extends ListBaseAdapter {
         } else {
             viewHolder = (ViewHolder) view.getTag();
         }
-
-        fillViewHolder(context, viewHolder, file);
-
+        File file = getItem(i);
+        Long value = fileSizeArr_.get(file);
+        fillViewHolder(context, viewHolder, file, value);
         return view;
     }
 
-    /*int getPositionByFile(File file) {
-        return fileNameArr_.indexOf(file);
-    }*/
-
-    void setFileSize(@NonNull Context context, View view, Long size, File file) {
+    void setFileSize(@NonNull File file, @NonNull Long size) {
         fileSizeArr_.put(file, size);
-        ViewHolder viewHolder = (ViewHolder) view.getTag();
-        fillViewHolder(context, viewHolder, file);
+        int position = fileNameArr_.indexOf(file);
+        notifyItemChanged(position);
     }
 
-    private void fillViewHolder(Context context, @NonNull ViewHolder holder, File file) {
+    private static void fillViewHolder(@NonNull Context context, @NonNull ViewHolder holder,
+                                       @NonNull File file, @Nullable Long value) {
         holder.fileName.setText(file.getName());
-
-        Long val = fileSizeArr_.get(file);
-        String size = val == null
+        String size = value == null
                 ? null
-                : countCorrectValue(context, val, 0);
+                : countCorrectValue(context, value, 0);
         if (size == null) {
             holder.progressBar.setVisibility(ProgressBar.VISIBLE);
             holder.fileSize.setText(R.string.place_holder_for_counting);
@@ -109,7 +98,7 @@ class ListAdapter extends ListBaseAdapter {
     }
 
     @NonNull
-    private String countCorrectValue(@NonNull Context context, double value, int index) {
+    private static String countCorrectValue(@NonNull Context context, double value, int index) {
         if (value < 0) {
             return context.getString(R.string.cannot_count);
         }
@@ -121,48 +110,6 @@ class ListAdapter extends ListBaseAdapter {
             }
         }
         return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
-    }
-
-    public boolean areAllItemsEnabled() {
-        return true;
-    }
-
-    public boolean isEnabled(int position) {
-        return true;
-    }
-
-    public View getDropDownView(int position, View convertView, ViewGroup parent) {
-        return getView(position, convertView, parent);
-    }
-
-    public int getItemViewType(int position) {
-        return 0;
-    }
-
-    public int getViewTypeCount() {
-        return 1;
-    }
-
-    public boolean isEmpty() {
-        return getCount() == 0;
-    }
-
-    public boolean hasStableIds() {
-        return false;
-    }
-
-    private final static class ViewHolder {
-        TextView fileName;
-        TextView fileSize;
-        ImageView fileImage;
-        ProgressBar progressBar;
-
-        ViewHolder(View view) {
-            fileName = (EditText) view.findViewById(R.id.file_name);
-            fileImage = (ImageView) view.findViewById(R.id.file_image);
-            fileSize = (TextView) view.findViewById(R.id.file_size);
-            progressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
-        }
     }
 
     private class FileNameComparator implements Comparator<File> {

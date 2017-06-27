@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
                 .commit();
     }
 
-    private void initToolbar(@NonNull File file, String text) {
+    private void initToolbar(@NonNull File file, @NonNull String text) {
         String name = text.equals(MAIN_PATH) ? getResources().getString(R.string.root_directory) : text;
         toolbarTitle_.setText(name);
         toolbarTitle_.setSelection(toolbarTitle_.getText().length());

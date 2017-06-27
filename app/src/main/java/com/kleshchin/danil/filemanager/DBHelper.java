@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.support.annotation.NonNull;
 
 import java.io.File;
 
@@ -12,6 +13,7 @@ import java.io.File;
  */
 
 class DBHelper extends SQLiteOpenHelper {
+
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "File_Manager";
     static final String TABLE_NAME = "File_data";
@@ -39,7 +41,7 @@ class DBHelper extends SQLiteOpenHelper {
     private static final String SQL_CREATE_INDEX =
             "CREATE INDEX " + FILE_PATH_INDEX + " ON " + TABLE_NAME + "(" + KEY_FILE_PATH + ")";
 
-    DBHelper(Context context) {
+    DBHelper(@NonNull Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -55,7 +57,7 @@ class DBHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    void insertIntoDB(Long size, File file, SQLiteDatabase database) {
+    void insertIntoDB(@NonNull Long size, @NonNull File file, @NonNull SQLiteDatabase database) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(DBHelper.KEY_FILE_SIZE, size);
         contentValues.put(DBHelper.KEY_FILE_MODIFIED_DATE, file.lastModified());

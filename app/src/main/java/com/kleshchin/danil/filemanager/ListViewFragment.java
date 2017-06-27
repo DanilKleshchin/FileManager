@@ -18,15 +18,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -36,13 +31,16 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
  */
 public class ListViewFragment extends Fragment implements
         OnCountFileSizeListener, OnMenuItemClickListener, OnBackPressedListener {
+
+    @NonNull
     private static final String MAIN_PATH = "/";
+    @NonNull
     private static final String PATH_KEY = "path";
+    @NonNull
     private static File currentFile_ = new File(MAIN_PATH);
     private AppCompatActivity currentActivity_;
-    private ListView listView_;
+    private ListViewBase listView_;
     private ListAdapter listAdapter_;
-    private List<File> fileNameArr_ = new ArrayList<>();
     private Map<File, Long> fileSizeArr_ = new HashMap<>();
     @Nullable
     private static ProgressDialog dialog_ = null;
@@ -95,7 +93,7 @@ public class ListViewFragment extends Fragment implements
         View view = inflater.inflate(R.layout.fragment_list, container, false);
         currentActivity_ = (AppCompatActivity) getActivity();
         setHasOptionsMenu(true);
-        listView_ = (ListView) view.findViewById(R.id.listView);
+        listView_ = (ListViewBase) view.findViewById(R.id.listView);
         listView_.setEmptyView(view.findViewById(R.id.list_view_empty_state));
         listView_.setOnItemClickListener(new ItemClickListener());
         dialog_ = null;
@@ -109,11 +107,6 @@ public class ListViewFragment extends Fragment implements
             } else {
                 fillListView(currentFile_);
             }
-        }
-        File[] list = currentFile_.listFiles();
-        if (list != null) {
-            Collections.addAll(fileNameArr_, list);
-            Collections.sort(fileNameArr_, new FileNameComparator());
         }
         SizeManager manager = SizeManager.getInstance();
         manager.openDB(currentActivity_);
@@ -164,17 +157,16 @@ public class ListViewFragment extends Fragment implements
     }
 
     @Override
-    public void onCountFileSize(final File file, Long sizeValue) {
+    public void onFileSizeCounted(final @NonNull File file, @NonNull Long sizeValue) {
         fileSizeArr_.put(file, sizeValue);
         try {
-            //updateView(listAdapter_.getPositionByFile(file), sizeValue, file);
-            updateView(fileNameArr_.indexOf(file));
+            listAdapter_.setFileSize(file, sizeValue);
         } catch (NullPointerException ignored) {
         }
     }
 
     @Override
-    public void onMenuItemClick(Context context) {
+    public void onMenuItemClick(@NonNull Context context) {
         OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) context;
         String parent = currentFile_.getParent();
         File parentFile = currentFile_.getParentFile();
@@ -201,15 +193,6 @@ public class ListViewFragment extends Fragment implements
         listener.onToolbarTextChange(currentFile_.getPath(), currentFile_);
     }
 
-    private void updateView(int position) {
-        int index = position - listView_.getFirstVisiblePosition();
-        View view = listView_.getChildAt(index);
-        if (view != null) {
-            listAdapter_.notifyItemChanged(0);
-            //listAdapter_.setFileSize(currentActivity_, view, size, file);
-        }
-    }
-
     private void fillListView(@NonNull File file) {
         if (fileSizeArr_.isEmpty()) {
             File list[] = file.listFiles();
@@ -221,16 +204,6 @@ public class ListViewFragment extends Fragment implements
         }
         listAdapter_ = new ListAdapter(file, fileSizeArr_);
         listView_.setAdapter(listAdapter_);
-        /*if(!flag) {
-            listView_.post(new Runnable() {
-                @Override
-                public void run() {
-                    SizeManager manager = SizeManager.getInstance();
-                    manager.setListener(ListViewFragment.this);
-                    manager.countSize(currentFile_);
-                }
-            });
-        }*/
         String path = file.getPath();
         OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
         listener.onToolbarTextChange((path.equals(MAIN_PATH))
@@ -253,19 +226,6 @@ public class ListViewFragment extends Fragment implements
                     Toast.makeText(currentActivity_, R.string.activity_not_found,
                             Toast.LENGTH_LONG).show();
                 }
-            }
-        }
-    }
-
-    private class FileNameComparator implements Comparator<File> {
-        @Override
-        public int compare(File lhs, File rhs) {
-            if (lhs.isDirectory() == rhs.isDirectory()) {
-                return lhs.getName().toLowerCase().compareTo(rhs.getName().toLowerCase());
-            } else if (lhs.isDirectory()) {
-                return -1;
-            } else {
-                return 1;
             }
         }
     }

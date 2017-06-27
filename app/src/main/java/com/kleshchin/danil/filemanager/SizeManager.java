@@ -48,12 +48,12 @@ class SizeManager {
         return SizeManagerHolder.instance;
     }
 
-    void getWritableDB(File file) {
+    void getWritableDB(@NonNull File file) {
         DBGetter dbGetter = new DBGetter();
         dbGetter.execute(file);
     }
 
-    private void countSize(File file) {
+    private void countSize(@NonNull File file) {
         if (file.list() != null) {
             List<File> files = new ArrayList<>(Arrays.asList(file.listFiles()));
             Collections.sort(files, new FileNameComparator());
@@ -64,20 +64,20 @@ class SizeManager {
                     checkDirectoryInDB(f);
                 }
                 if (files_.containsKey(f)) {
-                    listener_.onCountFileSize(f, files_.get(f));
+                    listener_.onFileSizeCounted(f, files_.get(f));
                 } else {
                     try {
                         SizeCounter counter = new SizeCounter();
                         counter.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, f);
                     } catch (RejectedExecutionException e) {
-                        listener_.onCountFileSize(f, -1L);
+                        listener_.onFileSizeCounted(f, -1L);
                     }
                 }
             }
         }
     }
 
-    private void checkDirectoryInDB(File file) {
+    private void checkDirectoryInDB(@NonNull File file) {
         database_ = dbHelper_.getWritableDatabase();
         Cursor cursor = database_.query(DBHelper.TABLE_NAME, null, null, null, null, null, null);
         if (cursor.moveToFirst()) {
@@ -115,7 +115,7 @@ class SizeManager {
             if (file_.isDirectory()) {
                 dbHelper_.insertIntoDB(aLong, file_, database_);
             }
-            listener_.onCountFileSize(file_, aLong);
+            listener_.onFileSizeCounted(file_, aLong);
         }
 
         boolean isSymlink(File file) throws IOException {
@@ -189,5 +189,5 @@ class SizeManager {
 }
 
 interface OnCountFileSizeListener {
-    void onCountFileSize(File file, Long sizeValue);
+    void onFileSizeCounted(File file, Long sizeValue);
 }
