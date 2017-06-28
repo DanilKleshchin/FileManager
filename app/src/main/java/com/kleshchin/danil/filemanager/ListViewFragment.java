@@ -158,9 +158,8 @@ public class ListViewFragment extends Fragment implements
     @Override
     public void onFileSizeCounted(final @NonNull File file, @NonNull Long sizeValue) {
         fileSizeArr_.put(file, sizeValue);
-        try {
+        if (listAdapter_ != null) {
             listAdapter_.setFileSize(file, sizeValue);
-        } catch (NullPointerException ignored) {
         }
     }
 
@@ -202,7 +201,7 @@ public class ListViewFragment extends Fragment implements
             }
         }
         listAdapter_ = new ListAdapter(file, fileSizeArr_);
-        listView_.setAdapter(listAdapter_);
+        listView_.setAdapter(listAdapter_, listView_);
         String path = file.getPath();
         OnCurrentFileChangeListener listener = (OnCurrentFileChangeListener) currentActivity_;
         listener.onCurrentFileChange((path.equals(MAIN_PATH))

@@ -28,7 +28,6 @@ class SizeManager {
     private OnCountFileSizeListener listener_;
     private static DBHelper dbHelper_;
     private static SQLiteDatabase database_;
-    private File currentFile_;
 
     private SizeManager() {
     }
@@ -50,8 +49,8 @@ class SizeManager {
 
     void startFileSizeCounting(@NonNull File file) {
         DBGetter dbGetter = new DBGetter();
+        dbGetter.setFile(file);
         dbGetter.execute();
-        currentFile_ = file;
     }
 
     private void countSize(@NonNull File file) {
@@ -163,12 +162,13 @@ class SizeManager {
         }
     }
 
-    private void onDatabaseOpened(@NonNull SQLiteDatabase database) {
+    private void onDatabaseOpened(@NonNull SQLiteDatabase database, @NonNull File file) {
         database_ = database;
-        countSize(currentFile_);
+        countSize(file);
     }
 
     private class DBGetter extends AsyncTask<Void, Void, SQLiteDatabase> {
+        private File file_;
         @Override
         protected SQLiteDatabase doInBackground(Void... params) {
             return dbHelper_.getWritableDatabase();
@@ -176,7 +176,11 @@ class SizeManager {
 
         @Override
         protected void onPostExecute(@NonNull SQLiteDatabase database) {
-            onDatabaseOpened(database);
+            onDatabaseOpened(database, file_);
+        }
+
+        public void setFile(@NonNull File file) {
+            file_ = file;
         }
     }
 

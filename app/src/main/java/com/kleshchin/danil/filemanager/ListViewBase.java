@@ -7,6 +7,9 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ListView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Danil Kleshchin on 26.06.2017.
  */
@@ -27,11 +30,11 @@ public class ListViewBase extends ListView implements ListAdapterBase.OnItemChan
         super(context, attrs, defStyleAttr);
     }
 
-    public void setAdapter(@Nullable ListAdapterBase adapter) {
+    public void setAdapter(@Nullable ListAdapterBase adapter, @NonNull ListViewBase listView) {
         if(adapter_ != null) {
             adapter_.removeListener(this);
         }
-        if(adapter != null) {
+        if (adapter != null) {
             adapter.setListener(this);
             super.setAdapter(adapter);
         }

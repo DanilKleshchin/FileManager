@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements
                 arr.add(temp);
                 temp = temp.getParentFile();
             }
-            arr.add(new File(MAIN_PATH));
+            arr.add(temp);
             Collections.reverse(arr);
             FragmentManager manager = getSupportFragmentManager();
             manager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements
     private void addFragment(@NonNull Fragment fragment, @NonNull File file) {
         FragmentManager manager = getSupportFragmentManager();
         String path = file.getPath();
-        if (file.getName().equals(MAIN_PATH)) {
+        if (file.getPath().equals(MAIN_PATH)) {
             manager.popBackStack();
         } else {
             manager.popBackStack(file.getParent(), 0);

@@ -12,14 +12,12 @@ import java.util.List;
  */
 abstract class ListAdapterBase extends BaseAdapter {
 
-    @Nullable
+    @NonNull
     private List<OnItemChangedListener> listener_ = new ArrayList<>();
 
     void notifyItemChanged(int position) {
-        if (listener_ != null) {
-            for (OnItemChangedListener l : listener_) {
-                l.onItemChanged(position);
-            }
+        for (OnItemChangedListener l : listener_) {
+            l.onItemChanged(position);
         }
     }
 
@@ -28,9 +26,7 @@ abstract class ListAdapterBase extends BaseAdapter {
     }
 
     void removeListener(@Nullable ListViewBase listener) {
-        if (listener_ != null) {
-            listener_.remove(listener);
-        }
+        listener_.remove(listener);
     }
 
     interface OnItemChangedListener {
