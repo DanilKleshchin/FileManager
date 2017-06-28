@@ -30,15 +30,14 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
  * Created by Danil Kleshchin on 19.05.2017.
  */
 public class ListViewFragment extends Fragment implements
-        OnCountFileSizeListener, OnMenuItemClickListener, OnBackPressedListener {
+        SizeManager.OnCountFileSizeListener, OnMenuItemClickListener, OnBackPressedListener {
 
-    @NonNull
     private static final String MAIN_PATH = "/";
-    @NonNull
     private static final String PATH_KEY = "path";
     @NonNull
     private static File currentFile_ = new File(MAIN_PATH);
-    private AppCompatActivity currentActivity_;
+    @NonNull
+    private AppCompatActivity currentActivity_ = (AppCompatActivity) getActivity();
     private ListViewBase listView_;
     private ListAdapter listAdapter_;
     private Map<File, Long> fileSizeArr_ = new HashMap<>();
@@ -89,7 +88,8 @@ public class ListViewFragment extends Fragment implements
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
+                             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_list, container, false);
         currentActivity_ = (AppCompatActivity) getActivity();
         setHasOptionsMenu(true);
@@ -108,10 +108,9 @@ public class ListViewFragment extends Fragment implements
                 fillListView(currentFile_);
             }
         }
-        SizeManager manager = SizeManager.getInstance();
-        manager.openDB(currentActivity_);
+        SizeManager manager = SizeManager.getInstance(currentActivity_);
         manager.setListener(this);
-        manager.getWritableDB(currentFile_);
+        manager.startFileSizeCounting(currentFile_);
         return view;
     }
 
@@ -152,8 +151,8 @@ public class ListViewFragment extends Fragment implements
     @Override
     public void onStop() {
         super.onStop();
-        OnSaveCurrentFile listener = (OnSaveCurrentFile) currentActivity_;
-        listener.onSaveCurrent(currentFile_.getPath());
+        OnStopFragmentListener listener = (OnStopFragmentListener) currentActivity_;
+        listener.onStopFragment(currentFile_.getPath());
     }
 
     @Override
@@ -167,15 +166,15 @@ public class ListViewFragment extends Fragment implements
 
     @Override
     public void onMenuItemClick(@NonNull Context context) {
-        OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) context;
-        String parent = currentFile_.getParent();
+        OnCurrentFileChangeListener listener = (OnCurrentFileChangeListener) context;
+        String parentPath = currentFile_.getParent();
         File parentFile = currentFile_.getParentFile();
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            if (parent.equals(MAIN_PATH)) {
-                listener.onToolbarTextChange(getResources().getString(R.string.root_directory),
+            if (parentPath.equals(MAIN_PATH)) {
+                listener.onCurrentFileChange(getResources().getString(R.string.root_directory),
                         parentFile);
             } else {
-                listener.onToolbarTextChange(parent, parentFile);
+                listener.onCurrentFileChange(parentPath, parentFile);
             }
         }
         if (!currentFile_.getPath().equals(MAIN_PATH)) {
@@ -189,8 +188,8 @@ public class ListViewFragment extends Fragment implements
     @Override
     public void onBackPressed() {
         currentFile_ = currentFile_.getParentFile();
-        OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
-        listener.onToolbarTextChange(currentFile_.getPath(), currentFile_);
+        OnCurrentFileChangeListener listener = (OnCurrentFileChangeListener) currentActivity_;
+        listener.onCurrentFileChange(currentFile_.getPath(), currentFile_);
     }
 
     private void fillListView(@NonNull File file) {
@@ -205,8 +204,8 @@ public class ListViewFragment extends Fragment implements
         listAdapter_ = new ListAdapter(file, fileSizeArr_);
         listView_.setAdapter(listAdapter_);
         String path = file.getPath();
-        OnToolbarTextChangeListener listener = (OnToolbarTextChangeListener) currentActivity_;
-        listener.onToolbarTextChange((path.equals(MAIN_PATH))
+        OnCurrentFileChangeListener listener = (OnCurrentFileChangeListener) currentActivity_;
+        listener.onCurrentFileChange((path.equals(MAIN_PATH))
                 ? getResources().getString(R.string.root_directory)
                 : path, file);
     }
@@ -230,15 +229,15 @@ public class ListViewFragment extends Fragment implements
         }
     }
 
-    interface OnToolbarTextChangeListener {
-        void onToolbarTextChange(String toolbarText, File file);
+    interface OnCurrentFileChangeListener {
+        void onCurrentFileChange(@NonNull String toolbarText, @NonNull File file);
     }
 
     interface OnListItemClickListener {
-        void onListItemClick(File file);
+        void onListItemClick(@NonNull File file);
     }
 
-    interface OnSaveCurrentFile {
-        void onSaveCurrent(String path);
+    interface OnStopFragmentListener {
+        void onStopFragment(@NonNull String path);
     }
 }

@@ -64,7 +64,7 @@ class ListAdapter extends ListAdapterBase {
         }
         File file = getItem(i);
         Long value = fileSizeArr_.get(file);
-        fillViewHolder(context, viewHolder, file, value);
+        bindViewHolder(context, viewHolder, file, value);
         return view;
     }
 
@@ -74,7 +74,7 @@ class ListAdapter extends ListAdapterBase {
         notifyItemChanged(position);
     }
 
-    private static void fillViewHolder(@NonNull Context context, @NonNull ViewHolder holder,
+    private static void bindViewHolder(@NonNull Context context, @NonNull ViewHolder holder,
                                        @NonNull File file, @Nullable Long value) {
         holder.fileName.setText(file.getName());
         String size = value == null

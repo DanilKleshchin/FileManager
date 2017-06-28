@@ -1,6 +1,8 @@
 package com.kleshchin.danil.filemanager;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ListView;
@@ -10,21 +12,29 @@ import android.widget.ListView;
  */
 public class ListViewBase extends ListView implements ListAdapterBase.OnItemChangedListener {
 
-    public ListViewBase(Context context) {
+    @Nullable
+    private ListAdapterBase adapter_ = null;
+
+    public ListViewBase(@NonNull Context context) {
         super(context);
     }
 
-    public ListViewBase(Context context, AttributeSet attrs) {
+    public ListViewBase(@NonNull Context context, @NonNull AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public ListViewBase(Context context, AttributeSet attrs, int defStyleAttr) {
+    public ListViewBase(@NonNull Context context, @NonNull AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
-    public void setAdapter(ListAdapterBase adapter) {
-        adapter.setListener(this);
-        super.setAdapter(adapter);
+    public void setAdapter(@Nullable ListAdapterBase adapter) {
+        if(adapter_ != null) {
+            adapter_.removeListener(this);
+        }
+        if(adapter != null) {
+            adapter.setListener(this);
+            super.setAdapter(adapter);
+        }
     }
 
     @Override

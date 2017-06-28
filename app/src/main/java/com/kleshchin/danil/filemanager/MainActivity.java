@@ -22,8 +22,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements ListViewFragment.OnToolbarTextChangeListener,
-        ListViewFragment.OnListItemClickListener, ListViewFragment.OnSaveCurrentFile {
+public class MainActivity extends AppCompatActivity implements
+        ListViewFragment.OnCurrentFileChangeListener, ListViewFragment.OnListItemClickListener,
+        ListViewFragment.OnStopFragmentListener {
 
     private static final String MAIN_PATH = "/";
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
@@ -38,9 +39,9 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
         Stetho.initializeWithDefaults(this);
         SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
         String lastPath = preferences.getString(LAST_FILE_PATH, "");
-        if (!lastPath.equals("")) {
+        File temp = new File(lastPath);
+        if (temp.exists()) {
             List<File> arr = new ArrayList<>();
-            File temp = new File(lastPath);
             while (!temp.getPath().equals(MAIN_PATH)) {
                 arr.add(temp);
                 temp = temp.getParentFile();
@@ -106,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     }
 
     @Override
-    public void onToolbarTextChange(@NonNull String text, @NonNull File file) {
+    public void onCurrentFileChange(@NonNull String text, @NonNull File file) {
         initToolbar(file, text);
     }
 
@@ -117,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
     }
 
     @Override
-    public void onSaveCurrent(@NonNull String path) {
+    public void onStopFragment(@NonNull String path) {
         SharedPreferences preferences = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(LAST_FILE_PATH, path);
@@ -185,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements ListViewFragment.
 }
 
 interface OnMenuItemClickListener {
-    void onMenuItemClick(Context context);
+    void onMenuItemClick(@NonNull Context context);
 }
 
 interface OnBackPressedListener {

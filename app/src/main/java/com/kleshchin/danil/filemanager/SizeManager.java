@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,9 +24,11 @@ import java.util.concurrent.RejectedExecutionException;
 class SizeManager {
 
     private static Map<File, Long> files_ = new HashMap<>();
+    @Nullable
     private OnCountFileSizeListener listener_;
     private static DBHelper dbHelper_;
     private static SQLiteDatabase database_;
+    private File currentFile_;
 
     private SizeManager() {
     }
@@ -35,25 +38,27 @@ class SizeManager {
         private final static SizeManager instance = new SizeManager();
     }
 
-    void setListener(ListViewFragment listener) {
-        this.listener_ = listener;
-    }
-
-    void openDB(Context context) {
-        dbHelper_ = new DBHelper(context);
+    void setListener(@Nullable ListViewFragment listener) {
+        listener_ = listener;
     }
 
     @NonNull
-    static SizeManager getInstance() {
+    static SizeManager getInstance(@NonNull Context context) {
+        dbHelper_ = new DBHelper(context);
         return SizeManagerHolder.instance;
     }
 
-    void getWritableDB(@NonNull File file) {
+    void startFileSizeCounting(@NonNull File file) {
         DBGetter dbGetter = new DBGetter();
-        dbGetter.execute(file);
+        dbGetter.execute();
+        currentFile_ = file;
     }
 
     private void countSize(@NonNull File file) {
+        if (listener_ == null) {
+            return;
+        }
+
         if (file.list() != null) {
             List<File> files = new ArrayList<>(Arrays.asList(file.listFiles()));
             Collections.sort(files, new FileNameComparator());
@@ -100,36 +105,27 @@ class SizeManager {
 
         @NonNull
         @Override
-        protected Long doInBackground(File... params) {
+        protected Long doInBackground(@NonNull File... params) {
             file_ = params[0];
             try {
-                return getDirSize(params[0]);
+                return getDirectorySize(params[0]);
             } catch (Exception e) {
                 return -1L;
             }
         }
 
         @Override
-        protected void onPostExecute(Long aLong) {
+        protected void onPostExecute(@NonNull Long aLong) {
             files_.put(file_, aLong);
             if (file_.isDirectory()) {
                 dbHelper_.insertIntoDB(aLong, file_, database_);
             }
-            listener_.onFileSizeCounted(file_, aLong);
-        }
-
-        boolean isSymlink(File file) throws IOException {
-            File canon;
-            if (file.getParent() == null) {
-                canon = file;
-            } else {
-                canon = new File(file.getParentFile().getCanonicalFile(),
-                        file.getName());
+            if (listener_ != null) {
+                listener_.onFileSizeCounted(file_, aLong);
             }
-            return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
         }
 
-        long getDirSize(File file) throws IOException {
+        long getDirectorySize(@Nullable File file) throws IOException {
             if (file != null && file.exists()) {
                 if (file.isFile()) {
                     return file.length();
@@ -146,33 +142,47 @@ class SizeManager {
                     if (f.isFile()) {
                         size += f.length();
                     } else if (!isSymlink(f)) {
-                        size += getDirSize(f);
+                        size += getDirectorySize(f);
                     } else {
-                        size += getDirSize(f.getAbsoluteFile());
+                        size += getDirectorySize(f.getAbsoluteFile());
                     }
                 }
                 return size;
             }
         }
+
+        boolean isSymlink(@NonNull File file) throws IOException {
+            File canon;
+            if (file.getParent() == null) {
+                canon = file;
+            } else {
+                canon = new File(file.getParentFile().getCanonicalFile(),
+                        file.getName());
+            }
+            return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
+        }
     }
 
-    private class DBGetter extends AsyncTask<File, Void, File> {
+    private void onDatabaseOpened(@NonNull SQLiteDatabase database) {
+        database_ = database;
+        countSize(currentFile_);
+    }
+
+    private class DBGetter extends AsyncTask<Void, Void, SQLiteDatabase> {
         @Override
-        protected File doInBackground(File... params) {
-            database_ = dbHelper_.getWritableDatabase();
-            return params[0];
+        protected SQLiteDatabase doInBackground(Void... params) {
+            return dbHelper_.getWritableDatabase();
         }
 
         @Override
-        protected void onPostExecute(File file) {
-            super.onPostExecute(file);
-            countSize(file);
+        protected void onPostExecute(@NonNull SQLiteDatabase database) {
+            onDatabaseOpened(database);
         }
     }
 
     private class FileNameComparator implements Comparator<File> {
         @Override
-        public int compare(File lhs, File rhs) {
+        public int compare(@NonNull File lhs, @NonNull File rhs) {
             if (lhs.isDirectory() == rhs.isDirectory()) {
                 return lhs.getName().toLowerCase().compareTo(rhs.getName().toLowerCase());
             } else if (lhs.isDirectory()) {
@@ -186,8 +196,8 @@ class SizeManager {
     static void closeDB() {
         dbHelper_.close();
     }
-}
 
-interface OnCountFileSizeListener {
-    void onFileSizeCounted(File file, Long sizeValue);
+    interface OnCountFileSizeListener {
+        void onFileSizeCounted(@NonNull File file, @NonNull Long sizeValue);
+    }
 }

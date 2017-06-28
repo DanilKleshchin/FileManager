@@ -25,21 +25,25 @@ class DBHelper extends SQLiteOpenHelper {
     private static final String TEXT_TYPE = " TEXT";
     private static final String INT_TYPE = " INTEGER";
     private static final String COMMA_SEP = ",";
+    private static final String BRACKET_RIGHT_SEP = ")";
+    private static final String BRACKET_LEFT_SEP = "(";
     private static final String FILE_PATH_INDEX = "file_path_index";
 
     private static final String SQL_CREATE_ENTRIES =
-            "CREATE TABLE " + TABLE_NAME + " (" +
+            "CREATE TABLE " + TABLE_NAME + BRACKET_LEFT_SEP +
                     KEY_ID + " INTEGER PRIMARY KEY" + COMMA_SEP +
                     KEY_FILE_PATH + TEXT_TYPE + COMMA_SEP +
                     KEY_FILE_SIZE + INT_TYPE + COMMA_SEP +
                     KEY_FILE_MODIFIED_DATE + INT_TYPE + COMMA_SEP +
-                    "UNIQUE" + "(" + KEY_FILE_PATH + ")" + "ON CONFLICT REPLACE" + ")";
+                    "UNIQUE" + BRACKET_LEFT_SEP + KEY_FILE_PATH +
+                    BRACKET_RIGHT_SEP + "ON CONFLICT REPLACE" + BRACKET_RIGHT_SEP;
 
     private static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + TABLE_NAME;
 
     private static final String SQL_CREATE_INDEX =
-            "CREATE INDEX " + FILE_PATH_INDEX + " ON " + TABLE_NAME + "(" + KEY_FILE_PATH + ")";
+            "CREATE INDEX " + FILE_PATH_INDEX + " ON " + TABLE_NAME + BRACKET_LEFT_SEP +
+                    KEY_FILE_PATH + BRACKET_RIGHT_SEP;
 
     DBHelper(@NonNull Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
