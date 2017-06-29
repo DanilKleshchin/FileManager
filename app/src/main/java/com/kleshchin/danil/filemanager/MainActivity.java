@@ -23,24 +23,30 @@ import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
-        ListViewFragment.OnCurrentFileChangeListener, ListViewFragment.OnListItemClickListener,
-        ListViewFragment.OnStopFragmentListener {
+        ListViewFragment.OnListItemClickListener, ListViewFragment.OnStopFragmentListener {
 
     private static final String MAIN_PATH = "/";
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
     public static ActionBar actionBar_;
     private EditText toolbarTitle_;
     private HorizontalScrollView scrollView_;
+    @NonNull
+    private File currentFile_ = new File(MAIN_PATH);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         Stetho.initializeWithDefaults(this);
+        setSupportActionBar((Toolbar) findViewById(R.id.main_toolbar));
+        actionBar_ = getSupportActionBar();
+        toolbarTitle_ = (EditText) findViewById(R.id.toolbar_title);
         SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
         String lastPath = preferences.getString(LAST_FILE_PATH, "");
         File temp = new File(lastPath);
         if (temp.exists()) {
+            currentFile_ = temp;
             List<File> arr = new ArrayList<>();
             while (!temp.getPath().equals(MAIN_PATH)) {
                 arr.add(temp);
@@ -56,11 +62,8 @@ public class MainActivity extends AppCompatActivity implements
             }
         } else {
             ListViewFragment listFragment = ListViewFragment.newInstance(null);
-            addFragment(listFragment, new File(MAIN_PATH));
+            addFragment(listFragment, currentFile_);
         }
-        setSupportActionBar((Toolbar) findViewById(R.id.main_toolbar));
-        actionBar_ = getSupportActionBar();
-        toolbarTitle_ = (EditText) findViewById(R.id.toolbar_title);
     }
 
     @Override
@@ -77,42 +80,30 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onBackPressed() {
-        FragmentManager manager = getSupportFragmentManager();
-        manager.popBackStack();
-        String name = manager.getBackStackEntryAt(0).getName();
-        OnBackPressedListener listener = (OnBackPressedListener)
-                manager.findFragmentByTag(name);
-        listener.onBackPressed();
+        onBackPressedState();
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                FragmentManager manager = getSupportFragmentManager();
-                int index = manager.getBackStackEntryCount() - 1;
-                String name = manager.getBackStackEntryAt(index).getName();
-                OnMenuItemClickListener menuClickListener = (OnMenuItemClickListener)
-                        manager.findFragmentByTag(name);
-                if (menuClickListener != null) {
-                    menuClickListener.onMenuItemClick(this);
-                } else {
-                    super.onOptionsItemSelected(item);
-                }
-                manager.popBackStack();
+                onBackPressedState();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    @Override
-    public void onCurrentFileChange(@NonNull String text, @NonNull File file) {
-        initToolbar(file, text);
+    private void onBackPressedState() {
+        currentFile_ = currentFile_.getParentFile();
+        getSupportFragmentManager().popBackStack();
+        initToolbar(currentFile_.getPath());
     }
+
 
     @Override
     public void onListItemClick(@NonNull File file) {
+        currentFile_ = file;
         ListViewFragment fragment = ListViewFragment.newInstance(file.getPath());
         addFragment(fragment, file);
     }
@@ -128,7 +119,8 @@ public class MainActivity extends AppCompatActivity implements
     private void addFragment(@NonNull Fragment fragment, @NonNull File file) {
         FragmentManager manager = getSupportFragmentManager();
         String path = file.getPath();
-        if (file.getPath().equals(MAIN_PATH)) {
+        initToolbar(path);
+        if (path.equals(MAIN_PATH)) {
             manager.popBackStack();
         } else {
             manager.popBackStack(file.getParent(), 0);
@@ -144,8 +136,10 @@ public class MainActivity extends AppCompatActivity implements
                 .commit();
     }
 
-    private void initToolbar(@NonNull File file, @NonNull String text) {
-        String name = text.equals(MAIN_PATH) ? getResources().getString(R.string.root_directory) : text;
+    private void initToolbar(@NonNull String text) {
+        String name = text.equals(MAIN_PATH) ?
+                getResources().getString(R.string.root_directory) :
+                text;
         toolbarTitle_.setText(name);
         toolbarTitle_.setSelection(toolbarTitle_.getText().length());
         if (actionBar_ == null) {
@@ -153,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements
         }
         actionBar_.setDisplayShowTitleEnabled(false);
         actionBar_.setDisplayShowHomeEnabled(true);
-        if (!file.getPath().equals(MAIN_PATH)) {
+        if (!text.equals(MAIN_PATH)) {
             actionBar_.setDisplayHomeAsUpEnabled(true);
             actionBar_.setLogo(null);
         } else {
@@ -183,12 +177,4 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
     }
-}
-
-interface OnMenuItemClickListener {
-    void onMenuItemClick(@NonNull Context context);
-}
-
-interface OnBackPressedListener {
-    void onBackPressed();
 }

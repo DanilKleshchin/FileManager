@@ -24,7 +24,7 @@ import java.util.Map;
  */
 class ListAdapter extends ListAdapterBase {
     private List<File> fileNameArr_ = new ArrayList<>();
-    private static Map<File, Long> fileSizeArr_ = new HashMap<>();
+    private Map<File, Long> fileSizeArr_ = new HashMap<>();
 
     ListAdapter(@NonNull File file, Map<File, Long> size) {
         if (file.list() != null) {

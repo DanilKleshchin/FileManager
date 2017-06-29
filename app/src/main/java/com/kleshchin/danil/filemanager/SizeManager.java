@@ -23,20 +23,20 @@ import java.util.concurrent.RejectedExecutionException;
  */
 class SizeManager {
 
-    private static Map<File, Long> files_ = new HashMap<>();
+    private Map<File, Long> files_ = new HashMap<>();
+
     @Nullable
     private OnCountFileSizeListener listener_;
     private static DBHelper dbHelper_;
     private static SQLiteDatabase database_;
-
     private SizeManager() {
     }
 
     private static class SizeManagerHolder {
+
         @NonNull
         private final static SizeManager instance = new SizeManager();
     }
-
     void setListener(@Nullable ListViewFragment listener) {
         listener_ = listener;
     }
@@ -47,7 +47,19 @@ class SizeManager {
         return SizeManagerHolder.instance;
     }
 
+    Map<File, Long> getFiles() {
+        return files_;
+    }
+
     void startFileSizeCounting(@NonNull File file) {
+        if (files_.isEmpty()) {
+            File list[] = file.listFiles();
+            if (list != null) {
+                for (File aList : list) {
+                    files_.put(aList, null);
+                }
+            }
+        }
         DBGetter dbGetter = new DBGetter();
         dbGetter.setFile(file);
         dbGetter.execute();
@@ -67,7 +79,7 @@ class SizeManager {
                 } else {
                     checkDirectoryInDB(f);
                 }
-                if (files_.containsKey(f)) {
+                if (files_.containsKey(f) && files_.get(f) != null) {
                     listener_.onFileSizeCounted(f, files_.get(f));
                 } else {
                     try {
@@ -92,6 +104,7 @@ class SizeManager {
                 if (cursor.getString(filePathIndex).equals(file.getPath())) {
                     if (file.lastModified() == cursor.getLong(fileDateIndex)) {
                         files_.put(file, cursor.getLong(fileSizeIndex));
+                        break;
                     }
                 }
             } while (cursor.moveToNext());
@@ -198,7 +211,9 @@ class SizeManager {
     }
 
     static void closeDB() {
-        dbHelper_.close();
+        if(dbHelper_ != null) {
+            dbHelper_.close();
+        }
     }
 
     interface OnCountFileSizeListener {
