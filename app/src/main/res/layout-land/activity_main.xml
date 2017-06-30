@@ -7,7 +7,7 @@
 
     <include
         android:id="@+id/main_toolbar"
-        layout="@layout/layout_toolbar" />
+        layout="@layout/layout_toolbar"/>
 
     <HorizontalScrollView
         android:id="@+id/horizontal_scroll_view"
@@ -17,9 +17,11 @@
 
         <LinearLayout
             android:id="@+id/view_for_replace"
-            android:layout_width="350dp"
+            android:layout_width="@dimen/width_land_list_view"
             android:layout_height="match_parent"
-            android:orientation="horizontal" />
+            android:divider="@drawable/vertical_divider"
+            android:orientation="horizontal"
+            android:showDividers="middle"/>
 
     </HorizontalScrollView>
 

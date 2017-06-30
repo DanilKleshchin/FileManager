@@ -11,7 +11,7 @@ import android.support.v7.app.AlertDialog;
 final class UtilDialogHelper {
 
     static AlertDialog makeDialog(@NonNull final Context context,
-                                  DialogInterface.OnClickListener listener) {
+                                  @NonNull DialogInterface.OnClickListener listener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(R.string.attention)
                 .setMessage(R.string.open_all_activities)

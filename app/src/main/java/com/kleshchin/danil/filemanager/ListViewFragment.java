@@ -26,7 +26,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
  * Created by Danil Kleshchin on 19.05.2017.
  */
 public class ListViewFragment extends Fragment implements
-        SizeManager.OnCountFileSizeListener, DialogInterface.OnClickListener {
+        SizeManager.OnCountFileSizeListener {
 
     private static final String MAIN_PATH = "/";
     private static final String PATH_KEY = "path";
@@ -124,13 +124,6 @@ public class ListViewFragment extends Fragment implements
         }
     }
 
-    @Override
-    public void onClick(DialogInterface dialog, int which) {
-        dialog_ = new ProgressDialog(currentActivity_);
-        intent_.setDataAndType(uri_, "*/*").addFlags(FLAG_ACTIVITY_NEW_TASK);
-        currentActivity_.startActivity(intent_);
-    }
-
     private void callActivityForFile(@NonNull String path, @NonNull final Context context)
             throws ActivityNotFoundException {
 
@@ -140,7 +133,7 @@ public class ListViewFragment extends Fragment implements
         final String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri_.toString());
         try {
             if (!mimeTypeMap.hasExtension(fileExtension)) {
-                UtilDialogHelper.makeDialog(context, ListViewFragment.this).show();
+                UtilDialogHelper.makeDialog(context, new DialogClickListener()).show();
             } else {
                 intent_.setDataAndType(uri_, mimeTypeMap.getMimeTypeFromExtension(fileExtension))
                         .addFlags(FLAG_ACTIVITY_NEW_TASK);
@@ -167,6 +160,15 @@ public class ListViewFragment extends Fragment implements
                             Toast.LENGTH_LONG).show();
                 }
             }
+        }
+    }
+
+    private class DialogClickListener implements DialogInterface.OnClickListener {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            dialog_ = new ProgressDialog(currentActivity_);
+            intent_.setDataAndType(uri_, "*/*").addFlags(FLAG_ACTIVITY_NEW_TASK);
+            currentActivity_.startActivity(intent_);
         }
     }
 
