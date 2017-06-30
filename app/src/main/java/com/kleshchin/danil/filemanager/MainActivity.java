@@ -10,20 +10,19 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutCompat;
 import android.support.v7.widget.Toolbar;
-import android.util.DisplayMetrics;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
-import android.widget.LinearLayout;
-
-//import com.facebook.stetho.Stetho;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+//import com.facebook.stetho.Stetho;
 
 public class MainActivity extends AppCompatActivity implements
         ListViewFragment.OnListItemClickListener, ListViewFragment.OnStopFragmentListener {
@@ -183,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements
             } else {
                 if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
                     scrollView_ = (HorizontalScrollView) findViewById(R.id.horizontal_scroll_view);
-                    scrollView_.postDelayed(new HorizontalScrollViewListener(), 100L);
+                    scrollView_.postDelayed(new HorizontalScrollViewListener(), 1000L);
                 }
             }
         }

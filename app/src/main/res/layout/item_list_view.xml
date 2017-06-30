@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="@dimen/list_item_height"
-    android:orientation="horizontal">
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent"
+              android:layout_height="@dimen/list_item_height"
+              android:orientation="horizontal">
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -17,7 +17,7 @@
             android:layout_marginLeft="@dimen/portrait_orientation_margin"
             android:layout_marginRight="@dimen/portrait_orientation_margin"
             android:contentDescription="@string/image_desc"
-            app:srcCompat="@mipmap/file_image" />
+            app:srcCompat="@mipmap/file_image"/>
     </LinearLayout>
 
     <LinearLayout
@@ -33,12 +33,13 @@
             android:layout_marginRight="@dimen/portrait_orientation_margin"
             android:layout_weight="1"
             android:background="@android:color/transparent"
-            android:clickable="false"
+            android:clickable="true"
             android:focusable="false"
             android:inputType="text"
             android:singleLine="true"
             android:textColor="@android:color/black"
             android:textSize="@dimen/text_view_text_size" />
+
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -49,14 +50,14 @@
             <TextView
                 android:id="@+id/file_size"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"/>
 
             <ProgressBar
                 android:id="@+id/progress_bar"
                 style="@android:style/Widget.ProgressBar.Small"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="invisible" />
+                android:visibility="invisible"/>
 
         </LinearLayout>
 

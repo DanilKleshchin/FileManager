@@ -26,6 +26,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_gravity="center">
+
         <EditText
             android:id="@+id/file_name"
             android:layout_width="wrap_content"
@@ -38,7 +39,9 @@
             android:inputType="text"
             android:singleLine="true"
             android:textColor="@android:color/black"
-            android:textSize="@dimen/text_view_text_size" />
+            android:textSize="@dimen/text_view_text_size"
+            android:overScrollMode="always"
+            android:scrollHorizontally="true"/>
 
         <LinearLayout
             android:layout_width="match_parent"

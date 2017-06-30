@@ -11,7 +11,7 @@ import android.widget.TextView;
  * Created by Danil Kleshchin on 26.06.2017.
  */
 final class ViewHolder {
-    TextView fileName;
+    EditText fileName;
     TextView fileSize;
     ImageView fileImage;
     ProgressBar progressBar;
