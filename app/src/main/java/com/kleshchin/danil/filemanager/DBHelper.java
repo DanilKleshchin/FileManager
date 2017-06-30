@@ -61,7 +61,7 @@ class DBHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    void insertIntoDB(@NonNull Long size, @NonNull File file, @NonNull SQLiteDatabase database) {
+    static void insertValuesIntoDatabase(@NonNull Long size, @NonNull File file, @NonNull SQLiteDatabase database) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(DBHelper.KEY_FILE_SIZE, size);
         contentValues.put(DBHelper.KEY_FILE_MODIFIED_DATE, file.lastModified());

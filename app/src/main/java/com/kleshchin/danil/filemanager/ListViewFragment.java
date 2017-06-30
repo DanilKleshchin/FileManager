@@ -33,13 +33,11 @@ public class ListViewFragment extends Fragment implements
     private static final String PATH_KEY = "path";
     @NonNull
     private AppCompatActivity currentActivity_ = (AppCompatActivity) getActivity();
-    private ListViewBase listView_;
     private ListAdapter listAdapter_;
     @Nullable
     private static ProgressDialog dialog_ = null;
     @NonNull
     private File file_ = new File(MAIN_PATH);
-    private SizeManager manager_;
 
     @NonNull
     public static ListViewFragment newInstance(@Nullable String path) {
@@ -90,7 +88,7 @@ public class ListViewFragment extends Fragment implements
         View view = inflater.inflate(R.layout.fragment_list, container, false);
         currentActivity_ = (AppCompatActivity) getActivity();
         setHasOptionsMenu(true);
-        listView_ = (ListViewBase) view.findViewById(R.id.listView);
+        ListViewBase listView_ = (ListViewBase) view.findViewById(R.id.listView);
         listView_.setEmptyView(view.findViewById(R.id.list_view_empty_state));
         listView_.setOnItemClickListener(new ItemClickListener());
         dialog_ = null;
@@ -101,10 +99,11 @@ public class ListViewFragment extends Fragment implements
                 file_ = new File(path);
             }
         }
-        manager_ = SizeManager.getInstance(currentActivity_);
+        SizeManager manager_ = SizeManager.getInstance(currentActivity_);
         manager_.setListener(this);
         manager_.startFileSizeCounting(file_);
-        fillListView(file_);
+        listAdapter_ = new ListAdapter(file_, manager_.getFiles());
+        listView_.setAdapter(listAdapter_, listView_);
         return view;
     }
 
@@ -154,11 +153,6 @@ public class ListViewFragment extends Fragment implements
         if (listAdapter_ != null) {
             listAdapter_.setFileSize(file, sizeValue);
         }
-    }
-
-    private void fillListView(@NonNull File file) {
-        listAdapter_ = new ListAdapter(file, manager_.getFiles());
-        listView_.setAdapter(listAdapter_, listView_);
     }
 
     private class ItemClickListener implements AdapterView.OnItemClickListener {

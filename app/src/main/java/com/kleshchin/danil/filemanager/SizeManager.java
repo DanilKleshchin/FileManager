@@ -29,6 +29,7 @@ class SizeManager {
     private OnCountFileSizeListener listener_;
     private static DBHelper dbHelper_;
     private static SQLiteDatabase database_;
+
     private SizeManager() {
     }
 
@@ -37,6 +38,7 @@ class SizeManager {
         @NonNull
         private final static SizeManager instance = new SizeManager();
     }
+
     void setListener(@Nullable ListViewFragment listener) {
         listener_ = listener;
     }
@@ -51,6 +53,10 @@ class SizeManager {
         return files_;
     }
 
+    /***
+     *Start getting a writable database.
+     * @param file - a file whose size is need counted.
+     */
     void startFileSizeCounting(@NonNull File file) {
         if (files_.isEmpty()) {
             File list[] = file.listFiles();
@@ -61,8 +67,7 @@ class SizeManager {
             }
         }
         DBGetter dbGetter = new DBGetter();
-        dbGetter.setFile(file);
-        dbGetter.execute();
+        dbGetter.execute(file);
     }
 
     private void countSize(@NonNull File file) {
@@ -119,21 +124,21 @@ class SizeManager {
         @Override
         protected Long doInBackground(@NonNull File... params) {
             file_ = params[0];
+            Long result;
             try {
-                return getDirectorySize(params[0]);
+                result = getDirectorySize(params[0]);
             } catch (Exception e) {
-                return -1L;
+                result = -1L;
             }
+            DBHelper.insertValuesIntoDatabase(result, file_, database_);
+            files_.put(file_, result);
+            return result;
         }
 
         @Override
-        protected void onPostExecute(@NonNull Long aLong) {
-            files_.put(file_, aLong);
-            if (file_.isDirectory()) {
-                dbHelper_.insertIntoDB(aLong, file_, database_);
-            }
+        protected void onPostExecute(@NonNull Long size) {
             if (listener_ != null) {
-                listener_.onFileSizeCounted(file_, aLong);
+                listener_.onFileSizeCounted(file_, size);
             }
         }
 
@@ -175,25 +180,40 @@ class SizeManager {
         }
     }
 
+    /**
+     * Call countSize() method when database is configured.
+     * @param database - database.
+     * @param file - file which need to count size.
+     */
     private void onDatabaseOpened(@NonNull SQLiteDatabase database, @NonNull File file) {
         database_ = database;
         countSize(file);
     }
 
-    private class DBGetter extends AsyncTask<Void, Void, SQLiteDatabase> {
+    /**
+     * Close database.
+     */
+    static void releaseSpace() {
+        if(dbHelper_ != null) {
+            dbHelper_.close();
+        }
+        if(database_ != null) {
+            database_.close();
+        }
+    }
+
+    private class DBGetter extends AsyncTask<File, Void, SQLiteDatabase> {
         private File file_;
+
         @Override
-        protected SQLiteDatabase doInBackground(Void... params) {
+        protected SQLiteDatabase doInBackground(File... params) {
+            file_ = params[0];
             return dbHelper_.getWritableDatabase();
         }
 
         @Override
         protected void onPostExecute(@NonNull SQLiteDatabase database) {
             onDatabaseOpened(database, file_);
-        }
-
-        public void setFile(@NonNull File file) {
-            file_ = file;
         }
     }
 
@@ -207,12 +227,6 @@ class SizeManager {
             } else {
                 return 1;
             }
-        }
-    }
-
-    static void closeDB() {
-        if(dbHelper_ != null) {
-            dbHelper_.close();
         }
     }
 

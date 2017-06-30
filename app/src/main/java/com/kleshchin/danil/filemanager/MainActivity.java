@@ -15,7 +15,7 @@ import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 
-import com.facebook.stetho.Stetho;
+//import com.facebook.stetho.Stetho;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Stetho.initializeWithDefaults(this);
+        //Stetho.initializeWithDefaults(this);
         setSupportActionBar((Toolbar) findViewById(R.id.main_toolbar));
         actionBar_ = getSupportActionBar();
         toolbarTitle_ = (EditText) findViewById(R.id.toolbar_title);
@@ -68,14 +68,14 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onStart() {
-        super.onStart();
         getSupportFragmentManager().addOnBackStackChangedListener(new BackStackListener());
+        super.onStart();
     }
 
     @Override
     public void onDestroy() {
+        SizeManager.releaseSpace();
         super.onDestroy();
-        SizeManager.closeDB();
     }
 
     @Override
@@ -94,10 +94,13 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    /**
+     * Pop fragment from back stack and init toolbar with path of parent file.
+     */
     private void onBackPressedState() {
         currentFile_ = currentFile_.getParentFile();
         getSupportFragmentManager().popBackStack();
-        initToolbar(currentFile_.getPath());
+        setToolbar(currentFile_);
     }
 
 
@@ -108,6 +111,10 @@ public class MainActivity extends AppCompatActivity implements
         addFragment(fragment, file);
     }
 
+    /**
+     * Save path of last file in shared preferences
+     * @param path - path of last file
+     */
     @Override
     public void onStopFragment(@NonNull String path) {
         SharedPreferences preferences = getPreferences(MODE_PRIVATE);
@@ -119,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements
     private void addFragment(@NonNull Fragment fragment, @NonNull File file) {
         FragmentManager manager = getSupportFragmentManager();
         String path = file.getPath();
-        initToolbar(path);
+        setToolbar(file);
         if (path.equals(MAIN_PATH)) {
             manager.popBackStack();
         } else {
@@ -136,10 +143,11 @@ public class MainActivity extends AppCompatActivity implements
                 .commit();
     }
 
-    private void initToolbar(@NonNull String text) {
-        String name = text.equals(MAIN_PATH) ?
+    private void setToolbar(@NonNull File file) {
+        String filePath = file.getPath();
+        String name = filePath.equals(MAIN_PATH) ?
                 getResources().getString(R.string.root_directory) :
-                text;
+                filePath;
         toolbarTitle_.setText(name);
         toolbarTitle_.setSelection(toolbarTitle_.getText().length());
         if (actionBar_ == null) {
@@ -147,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements
         }
         actionBar_.setDisplayShowTitleEnabled(false);
         actionBar_.setDisplayShowHomeEnabled(true);
-        if (!text.equals(MAIN_PATH)) {
+        if (!filePath.equals(MAIN_PATH)) {
             actionBar_.setDisplayHomeAsUpEnabled(true);
             actionBar_.setLogo(null);
         } else {
