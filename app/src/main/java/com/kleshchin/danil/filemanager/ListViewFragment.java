@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,17 +26,20 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
  * Created by Danil Kleshchin on 19.05.2017.
  */
 public class ListViewFragment extends Fragment implements
-        SizeManager.OnCountFileSizeListener {
+        SizeManager.OnCountFileSizeListener, DialogInterface.OnClickListener {
 
     private static final String MAIN_PATH = "/";
     private static final String PATH_KEY = "path";
     @NonNull
     private AppCompatActivity currentActivity_ = (AppCompatActivity) getActivity();
     private ListAdapter listAdapter_;
-    @Nullable
-    private static ProgressDialog dialog_ = null;
     @NonNull
     private File file_ = new File(MAIN_PATH);
+
+    @Nullable
+    private static ProgressDialog dialog_ = null;
+    private Uri uri_;
+    private Intent intent_;
 
     @NonNull
     public static ListViewFragment newInstance(@Nullable String path) {
@@ -46,39 +48,6 @@ public class ListViewFragment extends Fragment implements
         args.putString(PATH_KEY, path);
         fragment.setArguments(args);
         return fragment;
-    }
-
-    private static void callActivityForFile(@NonNull String path, @NonNull final Context context)
-            throws ActivityNotFoundException {
-        final Uri uri = Uri.fromFile(new File(path));
-        final Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-        final MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-        final String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
-        try {
-            if (!mimeTypeMap.hasExtension(fileExtension)) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setTitle(R.string.attention)
-                        .setMessage(R.string.open_all_activities)
-                        .setIcon(android.R.drawable.ic_menu_info_details)
-                        .setCancelable(false)
-                        .setPositiveButton(R.string.yes_button, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog_ = new ProgressDialog(context);
-                                intent.setDataAndType(uri, "*/*").addFlags(FLAG_ACTIVITY_NEW_TASK);
-                                context.startActivity(intent);
-                            }
-                        })
-                        .setNegativeButton(R.string.no_button, null);
-                builder.create().show();
-            } else {
-                intent.setDataAndType(uri, mimeTypeMap.getMimeTypeFromExtension(fileExtension))
-                        .addFlags(FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
-            }
-        } catch (Exception ignored) {
-
-        }
     }
 
     @Nullable
@@ -152,6 +121,33 @@ public class ListViewFragment extends Fragment implements
     public void onFileSizeCounted(final @NonNull File file, @NonNull Long sizeValue) {
         if (listAdapter_ != null) {
             listAdapter_.setFileSize(file, sizeValue);
+        }
+    }
+
+    @Override
+    public void onClick(DialogInterface dialog, int which) {
+        dialog_ = new ProgressDialog(currentActivity_);
+        intent_.setDataAndType(uri_, "*/*").addFlags(FLAG_ACTIVITY_NEW_TASK);
+        currentActivity_.startActivity(intent_);
+    }
+
+    private void callActivityForFile(@NonNull String path, @NonNull final Context context)
+            throws ActivityNotFoundException {
+
+        uri_ = Uri.fromFile(new File(path));
+        intent_ = new Intent(android.content.Intent.ACTION_VIEW);
+        final MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
+        final String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri_.toString());
+        try {
+            if (!mimeTypeMap.hasExtension(fileExtension)) {
+                UtilDialogHelper.makeDialog(context, ListViewFragment.this).show();
+            } else {
+                intent_.setDataAndType(uri_, mimeTypeMap.getMimeTypeFromExtension(fileExtension))
+                        .addFlags(FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent_);
+            }
+        } catch (Exception ignored) {
+
         }
     }
 
