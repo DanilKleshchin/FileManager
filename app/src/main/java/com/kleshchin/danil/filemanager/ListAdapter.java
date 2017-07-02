@@ -1,12 +1,16 @@
 package com.kleshchin.danil.filemanager;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 
 import java.io.File;
@@ -25,7 +29,7 @@ import java.util.Map;
 class ListAdapter extends ListAdapterBase {
     private List<File> fileNameArr_ = new ArrayList<>();
     private Map<File, Long> fileSizeArr_ = new HashMap<>();
-
+    private static boolean isLandOrienation_ = false;
     ListAdapter(@NonNull File file, Map<File, Long> size) {
         if (file.list() != null) {
             fileNameArr_ = new ArrayList<>(Arrays.asList(file.listFiles()));
@@ -54,6 +58,8 @@ class ListAdapter extends ListAdapterBase {
     @NonNull
     public View getView(int i, @Nullable View view, @NonNull ViewGroup viewGroup) {
         Context context = viewGroup.getContext();
+        isLandOrienation_ = context.getResources().getConfiguration().orientation ==
+                Configuration.ORIENTATION_LANDSCAPE;
         ViewHolder viewHolder;
         if (view == null) {
             view = LayoutInflater.from(context).inflate(R.layout.item_list_view, viewGroup, false);
@@ -77,6 +83,7 @@ class ListAdapter extends ListAdapterBase {
     private static void bindViewHolder(@NonNull Context context, @NonNull ViewHolder holder,
                                        @NonNull File file, @Nullable Long value) {
         holder.fileName.setText(file.getName());
+        holder.fileName.setOnTouchListener(new OnFileNameTouchListener());
         String size = value == null
                 ? null
                 : countCorrectValue(context, value, 0);
@@ -110,6 +117,34 @@ class ListAdapter extends ListAdapterBase {
             }
         }
         return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
+    }
+
+    private static class OnFileNameTouchListener implements EditText.OnTouchListener {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if(event.getAction() == MotionEvent.ACTION_DOWN) {
+                while (((View) v.getParent()).performClick()) {
+                    v = (View) v.getParent();
+                }
+            } else {
+                if (isLandOrienation_) {
+                    ViewParent viewParent = getScrollViewParent(v.getParent());
+                    if (((View) viewParent).getId() == R.id.horizontal_scroll_view) {
+                        viewParent.requestDisallowInterceptTouchEvent(true);
+                        viewParent.requestChildFocus(v, v);
+                    }
+                }
+            }
+            return false;
+        }
+
+        @NonNull
+        private ViewParent getScrollViewParent(ViewParent viewParent) {
+            while (((View) viewParent).getId() != R.id.horizontal_scroll_view) {
+                viewParent = viewParent.getParent();
+            }
+            return viewParent;
+        }
     }
 
     private class FileNameComparator implements Comparator<File> {

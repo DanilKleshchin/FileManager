@@ -1,5 +1,6 @@
 package com.kleshchin.danil.filemanager;
 
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -170,7 +171,11 @@ public class MainActivity extends AppCompatActivity implements
     private class HorizontalScrollViewListener implements Runnable {
         @Override
         public void run() {
-            scrollView_.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
+            //scrollView_.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
+            int amount = scrollView_.getChildAt(0).getMeasuredWidth()-
+                    getWindowManager().getDefaultDisplay().getWidth();
+            ObjectAnimator.ofInt(scrollView_, "scrollX", amount)
+                    .setDuration(3000L).start();
         }
     }
 
@@ -182,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements
             } else {
                 if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
                     scrollView_ = (HorizontalScrollView) findViewById(R.id.horizontal_scroll_view);
-                    scrollView_.postDelayed(new HorizontalScrollViewListener(), 1000L);
+                    scrollView_.postDelayed(new HorizontalScrollViewListener(), 10L);
                 }
             }
         }
