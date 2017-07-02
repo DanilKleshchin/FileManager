@@ -13,8 +13,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 
@@ -30,6 +28,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private static final String MAIN_PATH = "/";
     private static final String LAST_FILE_PATH = "LAST_FILE_PATH";
+    private static final String PROPERTY_NAME = "scrollX";
     public static ActionBar actionBar_;
     private EditText toolbarTitle_;
     private HorizontalScrollView scrollView_;
@@ -171,11 +170,10 @@ public class MainActivity extends AppCompatActivity implements
     private class HorizontalScrollViewListener implements Runnable {
         @Override
         public void run() {
-            //scrollView_.fullScroll(HorizontalScrollView.FOCUS_RIGHT);
             int amount = scrollView_.getChildAt(0).getMeasuredWidth()-
                     getWindowManager().getDefaultDisplay().getWidth();
-            ObjectAnimator.ofInt(scrollView_, "scrollX", amount)
-                    .setDuration(3000L).start();
+            ObjectAnimator.ofInt(scrollView_, PROPERTY_NAME, amount)
+                    .setDuration(1000L).start();
         }
     }
 

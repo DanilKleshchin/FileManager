@@ -26,7 +26,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
  * Created by Danil Kleshchin on 19.05.2017.
  */
 public class ListViewFragment extends Fragment implements
-        SizeManager.OnCountFileSizeListener {
+        SizeManager.OnCountFileSizeListener, ListAdapter.OnEditTextClickListener {
 
     private static final String MAIN_PATH = "/";
     private static final String PATH_KEY = "path";
@@ -35,6 +35,7 @@ public class ListViewFragment extends Fragment implements
     private ListAdapter listAdapter_;
     @NonNull
     private File file_ = new File(MAIN_PATH);
+    private ListViewBase listView_;
 
     @Nullable
     private static ProgressDialog dialog_ = null;
@@ -57,7 +58,7 @@ public class ListViewFragment extends Fragment implements
         View view = inflater.inflate(R.layout.fragment_list, container, false);
         currentActivity_ = (AppCompatActivity) getActivity();
         setHasOptionsMenu(true);
-        ListViewBase listView_ = (ListViewBase) view.findViewById(R.id.listView);
+        listView_ = (ListViewBase) view.findViewById(R.id.listView);
         listView_.setEmptyView(view.findViewById(R.id.list_view_empty_state));
         listView_.setOnItemClickListener(new ItemClickListener());
         dialog_ = null;
@@ -71,7 +72,7 @@ public class ListViewFragment extends Fragment implements
         SizeManager manager_ = SizeManager.getInstance(currentActivity_);
         manager_.setListener(this);
         manager_.startFileSizeCounting(file_);
-        listAdapter_ = new ListAdapter(file_, manager_.getFiles());
+        listAdapter_ = new ListAdapter(file_, manager_.getFiles(), this);
         listView_.setAdapter(listAdapter_, listView_);
         return view;
     }
@@ -122,6 +123,12 @@ public class ListViewFragment extends Fragment implements
         if (listAdapter_ != null) {
             listAdapter_.setFileSize(file, sizeValue);
         }
+    }
+
+    @Override
+    public void onEditTextClick(int position) {
+        listView_.performItemClick(listView_.getChildAt(position), position,
+                listView_.getItemIdAtPosition(position));
     }
 
     private void callActivityForFile(@NonNull String path, @NonNull final Context context)

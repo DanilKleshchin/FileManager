@@ -29,8 +29,14 @@ import java.util.Map;
 class ListAdapter extends ListAdapterBase {
     private List<File> fileNameArr_ = new ArrayList<>();
     private Map<File, Long> fileSizeArr_ = new HashMap<>();
-    private static boolean isLandOrienation_ = false;
-    ListAdapter(@NonNull File file, Map<File, Long> size) {
+    private static boolean isLandOrientation_ = false;
+    private ListViewFragment listener_;
+    private boolean isScrolling = false;
+
+    ListAdapter(@NonNull File file, Map<File, Long> size, @Nullable ListViewFragment listener) {
+        if (listener != null) {
+            listener_ = listener;
+        }
         if (file.list() != null) {
             fileNameArr_ = new ArrayList<>(Arrays.asList(file.listFiles()));
             Collections.sort(fileNameArr_, new FileNameComparator());
@@ -58,7 +64,7 @@ class ListAdapter extends ListAdapterBase {
     @NonNull
     public View getView(int i, @Nullable View view, @NonNull ViewGroup viewGroup) {
         Context context = viewGroup.getContext();
-        isLandOrienation_ = context.getResources().getConfiguration().orientation ==
+        isLandOrientation_ = context.getResources().getConfiguration().orientation ==
                 Configuration.ORIENTATION_LANDSCAPE;
         ViewHolder viewHolder;
         if (view == null) {
@@ -70,6 +76,7 @@ class ListAdapter extends ListAdapterBase {
         }
         File file = getItem(i);
         Long value = fileSizeArr_.get(file);
+        viewHolder.fileName.setOnTouchListener(new OnFileNameTouchListener(i));
         bindViewHolder(context, viewHolder, file, value);
         return view;
     }
@@ -83,7 +90,6 @@ class ListAdapter extends ListAdapterBase {
     private static void bindViewHolder(@NonNull Context context, @NonNull ViewHolder holder,
                                        @NonNull File file, @Nullable Long value) {
         holder.fileName.setText(file.getName());
-        holder.fileName.setOnTouchListener(new OnFileNameTouchListener());
         String size = value == null
                 ? null
                 : countCorrectValue(context, value, 0);
@@ -119,21 +125,38 @@ class ListAdapter extends ListAdapterBase {
         return String.format(Locale.getDefault(), "%.2f", value) + " " + units[index];
     }
 
-    private static class OnFileNameTouchListener implements EditText.OnTouchListener {
+    private class OnFileNameTouchListener implements EditText.OnTouchListener {
+        private int position_;
+
+        OnFileNameTouchListener(int position) {
+            position_ = position;
+        }
+
         @Override
         public boolean onTouch(View v, MotionEvent event) {
-            if(event.getAction() == MotionEvent.ACTION_DOWN) {
-                while (((View) v.getParent()).performClick()) {
-                    v = (View) v.getParent();
-                }
-            } else {
-                if (isLandOrienation_) {
-                    ViewParent viewParent = getScrollViewParent(v.getParent());
-                    if (((View) viewParent).getId() == R.id.horizontal_scroll_view) {
-                        viewParent.requestDisallowInterceptTouchEvent(true);
-                        viewParent.requestChildFocus(v, v);
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_SCROLL:
+                    isScrolling = true;
+                    while (((View) v.getParent()).performClick()) {
+                        v = (View) v.getParent();
                     }
-                }
+                    if (isLandOrientation_) {
+                        ViewParent viewParent = getScrollViewParent(v.getParent());
+                        if (((View) viewParent).getId() == R.id.horizontal_scroll_view) {
+                            viewParent.requestDisallowInterceptTouchEvent(true);
+                            viewParent.requestChildFocus(v, v);
+                        }
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if(!isScrolling) {
+                        long eventDuration = event.getEventTime() - event.getDownTime();
+                        if (eventDuration < 500L) {
+                            listener_.onEditTextClick(position_);
+                        }
+                    }
+                    isScrolling = false;
+                    break;
             }
             return false;
         }
@@ -158,5 +181,9 @@ class ListAdapter extends ListAdapterBase {
                 return 1;
             }
         }
+    }
+
+    interface OnEditTextClickListener {
+        void onEditTextClick(int position);
     }
 }
