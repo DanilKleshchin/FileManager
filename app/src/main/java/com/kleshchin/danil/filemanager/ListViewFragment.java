@@ -173,9 +173,15 @@ public class ListViewFragment extends Fragment implements
     private class DialogClickListener implements DialogInterface.OnClickListener {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            dialog_ = new ProgressDialog(currentActivity_);
-            intent_.setDataAndType(uri_, "*/*").addFlags(FLAG_ACTIVITY_NEW_TASK);
-            currentActivity_.startActivity(intent_);
+            switch (which) {
+                case DialogInterface.BUTTON_POSITIVE:
+                    dialog_ = new ProgressDialog(currentActivity_);
+                    intent_.setDataAndType(uri_, "*/*").addFlags(FLAG_ACTIVITY_NEW_TASK);
+                    currentActivity_.startActivity(intent_);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 

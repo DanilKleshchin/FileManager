@@ -17,15 +17,15 @@
             android:layout_height="@dimen/image_view_width_height"
             android:layout_marginLeft="@dimen/land_orientation_margin"
             android:layout_marginRight="@dimen/land_orientation_margin"
-            app:srcCompat="@mipmap/file_image"
-            android:contentDescription="@string/image_desc" />
+            android:contentDescription="@string/image_desc"
+            app:srcCompat="@mipmap/file_image"/>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="@dimen/width_of_land_layout"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="center">
+        android:layout_gravity="center"
+        android:orientation="vertical">
 
         <EditText
             android:id="@+id/file_name"
@@ -37,11 +37,11 @@
             android:clickable="false"
             android:focusable="false"
             android:inputType="textNoSuggestions"
+            android:overScrollMode="always"
+            android:scrollHorizontally="true"
             android:singleLine="true"
             android:textColor="@android:color/black"
-            android:textSize="@dimen/text_view_text_size"
-            android:overScrollMode="always"
-            android:scrollHorizontally="true"/>
+            android:textSize="@dimen/text_view_text_size"/>
 
         <LinearLayout
             android:layout_width="match_parent"
